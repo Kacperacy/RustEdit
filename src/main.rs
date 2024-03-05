@@ -7,7 +7,6 @@ fn main() {
     let _ = enable_raw_mode();
     let editor = Editor::new();
 
-    editor.refresh_screen();
     loop {
         editor.refresh_screen();
         if !editor.process_keypress() {
