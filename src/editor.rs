@@ -26,7 +26,10 @@ impl Editor {
 
     pub fn draw_rows(&self) {
         for _ in 0..self.screen_rows {
-            println!("~\r");
+            print!("~");
+            if self.screen_rows > 1 {
+                print!("\r\n");
+            }
         }
     }
 
@@ -54,5 +57,9 @@ impl Editor {
         self.refresh_screen();
         eprintln!("{}: {}", message.into(), std::io::Error::last_os_error());
         std::process::exit(1);
+    }
+
+    pub fn get_cursor_position(&self) -> Result<(u16, u16), ()> {
+        crossterm::cursor::position().map_err(|_| ())
     }
 }
