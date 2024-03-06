@@ -5,7 +5,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 fn main() {
     let _ = enable_raw_mode();
-    let editor = Editor::new();
+    let mut editor = Editor::new();
 
     loop {
         editor.refresh_screen();
@@ -13,7 +13,7 @@ fn main() {
             break;
         }
     }
-    editor.refresh_screen();
+    editor.purge();
 
     let _ = disable_raw_mode();
 }

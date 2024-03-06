@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use crossterm::{
     cursor::{Hide, MoveTo},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
@@ -9,6 +11,8 @@ const VERSION: &str = "0.0.1";
 pub struct Editor {
     screen_rows: usize,
     screen_cols: usize,
+    cursor_x: usize,
+    cursor_y: usize,
 }
 
 impl Editor {
@@ -17,19 +21,21 @@ impl Editor {
         Self {
             screen_rows: screen_rows as usize,
             screen_cols: screen_cols as usize,
+            cursor_x: 0,
+            cursor_y: 0,
         }
     }
 
     pub fn refresh_screen(&self) {
         print!("{} {}", Hide, MoveTo(0, 0));
         self.draw_rows();
-        print!("{} {}", MoveTo(0, 0), Hide);
+        print!("{}", MoveTo(self.cursor_x as u16, self.cursor_y as u16));
     }
 
     pub fn draw_rows(&self) {
         for i in 0..self.screen_rows {
             if i == self.screen_rows / 3 {
-                let message = "rust-edit v.".to_string() + VERSION;
+                let message = "rust-edit v.".to_string() + VERSION + " - Press Ctrl-Q to quit";
                 let len = message.len();
                 let padding = (self.screen_cols - len) / 2;
                 if padding > 0 {
@@ -59,11 +65,27 @@ impl Editor {
         }
     }
 
-    pub fn process_keypress(&self) -> bool {
+    pub fn process_keypress(&mut self) -> bool {
         match self.read_key() {
             Ok(c) => {
                 println!("{c:?}\r");
-                !(c.code == KeyCode::Char('q') && KeyModifiers::CONTROL == c.modifiers)
+
+                if c.code == KeyCode::Char('q') && KeyModifiers::CONTROL == c.modifiers {
+                    false
+                } else if c.code == KeyCode::Up
+                    || c.code == KeyCode::Down
+                    || c.code == KeyCode::Left
+                    || c.code == KeyCode::Right
+                    || c.code == KeyCode::PageUp
+                    || c.code == KeyCode::PageDown
+                    || c.code == KeyCode::Home
+                    || c.code == KeyCode::End
+                {
+                    self.move_cursor(c);
+                    true
+                } else {
+                    true
+                }
             }
             Err(_) => false,
         }
@@ -76,7 +98,45 @@ impl Editor {
         std::process::exit(1);
     }
 
-    pub fn get_cursor_position(&self) -> Result<(u16, u16), ()> {
-        crossterm::cursor::position().map_err(|_| ())
+    pub fn move_cursor(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Up => {
+                if self.cursor_y > 0 {
+                    self.cursor_y -= 1;
+                }
+            }
+            KeyCode::Down => {
+                if self.cursor_y < self.screen_rows {
+                    self.cursor_y += 1;
+                }
+            }
+            KeyCode::Left => {
+                if self.cursor_x > 0 {
+                    self.cursor_x -= 1;
+                }
+            }
+            KeyCode::Right => {
+                if self.cursor_x < self.screen_cols {
+                    self.cursor_x += 1;
+                }
+            }
+            KeyCode::PageUp => {
+                self.cursor_y = 0;
+            }
+            KeyCode::PageDown => {
+                self.cursor_y = self.screen_rows;
+            }
+            KeyCode::Home => {
+                self.cursor_x = 0;
+            }
+            KeyCode::End => {
+                self.cursor_x = self.screen_cols;
+            }
+            _ => {}
+        }
+    }
+
+    pub fn purge(&self) {
+        print!("{}", Clear(ClearType::Purge));
     }
 }
