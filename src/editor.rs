@@ -4,6 +4,8 @@ use crossterm::{
     terminal::{disable_raw_mode, Clear, ClearType},
 };
 
+const VERSION: &str = "0.0.1";
+
 pub struct Editor {
     screen_rows: usize,
     screen_cols: usize,
@@ -27,7 +29,7 @@ impl Editor {
     pub fn draw_rows(&self) {
         for i in 0..self.screen_rows {
             if i == self.screen_rows / 3 {
-                let message = "rust-edit v0.1";
+                let message = "rust-edit v.".to_string() + VERSION;
                 let len = message.len();
                 let padding = (self.screen_cols - len) / 2;
                 if padding > 0 {
