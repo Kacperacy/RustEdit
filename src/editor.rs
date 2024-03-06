@@ -1,3 +1,5 @@
+use std::io::BufRead;
+
 use crossterm::{
     cursor::{Hide, MoveTo},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
@@ -11,6 +13,7 @@ pub struct Editor {
     screen_cols: usize,
     cursor_x: usize,
     cursor_y: usize,
+    rows: Vec<String>,
 }
 
 impl Editor {
@@ -21,6 +24,7 @@ impl Editor {
             screen_cols: screen_cols as usize,
             cursor_x: 0,
             cursor_y: 0,
+            rows: Vec::new(),
         }
     }
 
@@ -32,19 +36,25 @@ impl Editor {
 
     pub fn draw_rows(&self) {
         for i in 0..self.screen_rows {
-            if i == self.screen_rows / 3 {
-                let message = "rust-edit v.".to_string() + VERSION + " - Press Ctrl-Q to quit";
-                let len = message.len();
-                let padding = (self.screen_cols - len) / 2;
-                if padding > 0 {
-                    print!("~");
-                    for _ in 0..padding - 1 {
-                        print!(" ");
+            if i >= self.rows.len() {
+                if self.rows.is_empty() && i == self.screen_rows / 3 {
+                    let message = "rust-edit v.".to_string() + VERSION + " - Press Ctrl-Q to quit";
+                    let len = message.len();
+                    let padding = (self.screen_cols - len) / 2;
+                    if padding > 0 {
+                        print!("~");
+                        for _ in 0..padding - 1 {
+                            print!(" ");
+                        }
+                        print!("{}", message);
                     }
-                    print!("{}", message);
+                } else {
+                    print!("~");
                 }
+            } else if self.rows[i].len() > self.screen_cols {
+                print!("{}", &self.rows[i][0..self.screen_cols]);
             } else {
-                print!("~");
+                print!("{}", &self.rows[i]);
             }
 
             print!("{}", Clear(ClearType::UntilNewLine));
@@ -136,5 +146,15 @@ impl Editor {
 
     pub fn purge(&self) {
         print!("{}", Clear(ClearType::Purge));
+    }
+
+    pub fn open(&mut self, _filename: Option<&String>) {
+        if let Some(filename) = _filename {
+            let file = std::fs::File::open(filename).unwrap();
+            let reader = std::io::BufReader::new(file);
+            for line in reader.lines() {
+                self.rows.push(line.unwrap());
+            }
+        }
     }
 }

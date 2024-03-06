@@ -4,8 +4,11 @@ use editor::*;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 fn main() {
+    let args = std::env::args().collect::<Vec<String>>();
+
     let _ = enable_raw_mode();
     let mut editor = Editor::new();
+    editor.open(args.get(1));
 
     loop {
         editor.refresh_screen();
