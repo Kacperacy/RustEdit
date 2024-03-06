@@ -1,7 +1,7 @@
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+
 mod editor;
 use editor::*;
-
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();

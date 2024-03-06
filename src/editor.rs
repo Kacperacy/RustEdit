@@ -1,4 +1,7 @@
-use std::io::BufRead;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 use crossterm::{
     cursor::{Hide, MoveTo},
@@ -150,10 +153,11 @@ impl Editor {
 
     pub fn open(&mut self, _filename: Option<&String>) {
         if let Some(filename) = _filename {
-            let file = std::fs::File::open(filename).unwrap();
-            let reader = std::io::BufReader::new(file);
-            for line in reader.lines() {
-                self.rows.push(line.unwrap());
+            if let Ok(file) = File::open(filename) {
+                let reader = BufReader::new(file);
+                for line in reader.lines() {
+                    self.rows.push(line.unwrap());
+                }
             }
         }
     }
