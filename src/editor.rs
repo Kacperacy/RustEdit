@@ -1,5 +1,5 @@
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{Hide, MoveTo},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
     terminal::{disable_raw_mode, Clear, ClearType},
 };
@@ -19,15 +19,30 @@ impl Editor {
     }
 
     pub fn refresh_screen(&self) {
-        print!("{} {}", Clear(ClearType::All), MoveTo(0, 0));
+        print!("{} {}", Hide, MoveTo(0, 0));
         self.draw_rows();
-        print!("{}", MoveTo(0, 0));
+        print!("{} {}", MoveTo(0, 0), Hide);
     }
 
     pub fn draw_rows(&self) {
-        for _ in 0..self.screen_rows {
-            print!("~");
-            if self.screen_rows > 1 {
+        for i in 0..self.screen_rows {
+            if i == self.screen_rows / 3 {
+                let message = "rust-edit v0.1";
+                let len = message.len();
+                let padding = (self.screen_cols - len) / 2;
+                if padding > 0 {
+                    print!("~");
+                    for _ in 0..padding - 1 {
+                        print!(" ");
+                    }
+                    print!("{}", message);
+                }
+            } else {
+                print!("~");
+            }
+
+            print!("{}", Clear(ClearType::UntilNewLine));
+            if i < self.screen_rows - 1 {
                 print!("\r\n");
             }
         }
