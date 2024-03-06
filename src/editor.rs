@@ -1,11 +1,12 @@
 use std::{
     fs::File,
-    io::{BufRead, BufReader},
+    io::{stdout, BufRead, BufReader},
 };
 
 use crossterm::{
-    cursor::{Hide, MoveTo},
+    cursor::{MoveTo, Show},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
+    execute,
     terminal::{disable_raw_mode, Clear, ClearType},
 };
 
@@ -14,6 +15,7 @@ const VERSION: &str = "0.0.1";
 pub struct Editor {
     screen_rows: usize,
     screen_cols: usize,
+    row_off: usize,
     cursor_x: usize,
     cursor_y: usize,
     rows: Vec<String>,
@@ -25,21 +27,27 @@ impl Editor {
         Self {
             screen_rows: screen_rows as usize,
             screen_cols: screen_cols as usize,
+            row_off: 0,
             cursor_x: 0,
             cursor_y: 0,
             rows: Vec::new(),
         }
     }
 
-    pub fn refresh_screen(&self) {
-        print!("{} {}", Hide, MoveTo(0, 0));
+    pub fn refresh_screen(&mut self) {
+        self.scroll();
+        let _ = execute!(stdout(), Show, MoveTo(0, 0));
         self.draw_rows();
-        print!("{}", MoveTo(self.cursor_x as u16, self.cursor_y as u16));
+        let _ = execute!(
+            stdout(),
+            MoveTo(self.cursor_x as u16, (self.cursor_y - self.row_off) as u16)
+        );
     }
 
     pub fn draw_rows(&self) {
         for i in 0..self.screen_rows {
-            if i >= self.rows.len() {
+            let file_row = i + self.row_off;
+            if file_row >= self.rows.len() {
                 if self.rows.is_empty() && i == self.screen_rows / 3 {
                     let message = "rust-edit v.".to_string() + VERSION + " - Press Ctrl-Q to quit";
                     let len = message.len();
@@ -54,20 +62,20 @@ impl Editor {
                 } else {
                     print!("~");
                 }
-            } else if self.rows[i].len() > self.screen_cols {
-                print!("{}", &self.rows[i][0..self.screen_cols]);
+            } else if self.rows[file_row].len() > self.screen_cols {
+                print!("{}", &self.rows[file_row][0..self.screen_cols]);
             } else {
-                print!("{}", &self.rows[i]);
+                print!("{}", &self.rows[file_row]);
             }
 
-            print!("{}", Clear(ClearType::UntilNewLine));
+            let _ = execute!(stdout(), Clear(ClearType::UntilNewLine));
             if i < self.screen_rows - 1 {
                 print!("\r\n");
             }
         }
     }
 
-    pub fn read_key(&self) -> Result<KeyEvent, ()> {
+    pub fn read_key(&mut self) -> Result<KeyEvent, ()> {
         if let Ok(Key(key)) = read() {
             Ok(key)
         } else {
@@ -102,7 +110,7 @@ impl Editor {
         }
     }
 
-    pub fn die<S: Into<String>>(&self, message: S) {
+    pub fn die<S: Into<String>>(&mut self, message: S) {
         let _ = disable_raw_mode();
         self.refresh_screen();
         eprintln!("{}: {}", message.into(), std::io::Error::last_os_error());
@@ -117,7 +125,7 @@ impl Editor {
                 }
             }
             KeyCode::Down => {
-                if self.cursor_y < self.screen_rows {
+                if self.cursor_y < self.rows.len() {
                     self.cursor_y += 1;
                 }
             }
@@ -148,7 +156,7 @@ impl Editor {
     }
 
     pub fn purge(&self) {
-        print!("{}", Clear(ClearType::Purge));
+        let _ = execute!(stdout(), MoveTo(0, 0), Clear(ClearType::Purge));
     }
 
     pub fn open(&mut self, _filename: Option<&String>) {
@@ -159,6 +167,15 @@ impl Editor {
                     self.rows.push(line.unwrap());
                 }
             }
+        }
+    }
+
+    pub fn scroll(&mut self) {
+        if self.cursor_y < self.row_off {
+            self.row_off = self.cursor_y;
+        }
+        if self.cursor_y >= self.row_off + self.screen_rows {
+            self.row_off = self.cursor_y - self.screen_rows + 1;
         }
     }
 }
