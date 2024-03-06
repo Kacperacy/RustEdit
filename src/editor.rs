@@ -1,10 +1,10 @@
 use std::{
     fs::File,
-    io::{stdout, BufRead, BufReader},
+    io::{stdout, BufRead, BufReader, Write},
 };
 
 use crossterm::{
-    cursor::{MoveTo, Show},
+    cursor::{Hide, MoveTo, Show},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, Clear, ClearType},
@@ -36,15 +36,18 @@ impl Editor {
 
     pub fn refresh_screen(&mut self) {
         self.scroll();
-        let _ = execute!(stdout(), Show, MoveTo(0, 0));
+        let _ = execute!(stdout(), Hide, MoveTo(0, 0), Clear(ClearType::Purge));
         self.draw_rows();
         let _ = execute!(
             stdout(),
-            MoveTo(self.cursor_x as u16, (self.cursor_y - self.row_off) as u16)
+            MoveTo(self.cursor_x as u16, (self.cursor_y - self.row_off) as u16),
+            Show
         );
     }
 
     pub fn draw_rows(&self) {
+        let mut buffer = String::new();
+
         for i in 0..self.screen_rows {
             let file_row = i + self.row_off;
             if file_row >= self.rows.len() {
@@ -53,26 +56,28 @@ impl Editor {
                     let len = message.len();
                     let padding = (self.screen_cols - len) / 2;
                     if padding > 0 {
-                        print!("~");
+                        buffer.push('~');
                         for _ in 0..padding - 1 {
-                            print!(" ");
+                            buffer.push(' ');
                         }
-                        print!("{}", message);
+                        buffer.push_str(&message);
                     }
                 } else {
-                    print!("~");
+                    buffer.push('~');
                 }
             } else if self.rows[file_row].len() > self.screen_cols {
-                print!("{}", &self.rows[file_row][0..self.screen_cols]);
+                buffer.push_str(&self.rows[file_row][0..self.screen_cols]);
             } else {
-                print!("{}", &self.rows[file_row]);
+                buffer.push_str(&self.rows[file_row]);
             }
 
-            let _ = execute!(stdout(), Clear(ClearType::UntilNewLine));
+            buffer.push_str(&format!("{}", Clear(ClearType::UntilNewLine)));
+
             if i < self.screen_rows - 1 {
-                print!("\r\n");
+                buffer.push_str("\r\n");
             }
         }
+        stdout().write_all(buffer.as_bytes()).unwrap();
     }
 
     pub fn read_key(&mut self) -> Result<KeyEvent, ()> {
@@ -87,8 +92,6 @@ impl Editor {
     pub fn process_keypress(&mut self) -> bool {
         match self.read_key() {
             Ok(c) => {
-                println!("{c:?}\r");
-
                 if c.code == KeyCode::Char('q') && KeyModifiers::CONTROL == c.modifiers {
                     false
                 } else if c.code == KeyCode::Up
