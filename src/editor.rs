@@ -1,5 +1,3 @@
-use std::{thread::sleep, time::Duration};
-
 use crossterm::{
     cursor::{Hide, MoveTo},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
