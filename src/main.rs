@@ -1,4 +1,4 @@
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, DisableLineWrap, EnableLineWrap};
 
 mod editor;
 use editor::*;
@@ -7,6 +7,8 @@ fn main() {
     let args = std::env::args().collect::<Vec<String>>();
 
     let _ = enable_raw_mode();
+    let _ = DisableLineWrap;
+
     let mut editor = Editor::new();
     editor.open(args.get(1));
 
@@ -19,4 +21,5 @@ fn main() {
     editor.purge();
 
     let _ = disable_raw_mode();
+    let _ = EnableLineWrap;
 }

@@ -16,6 +16,7 @@ pub struct Editor {
     screen_rows: usize,
     screen_cols: usize,
     row_off: usize,
+    col_off: usize,
     cursor_x: usize,
     cursor_y: usize,
     rows: Vec<String>,
@@ -28,6 +29,7 @@ impl Editor {
             screen_rows: screen_rows as usize,
             screen_cols: screen_cols as usize,
             row_off: 0,
+            col_off: 0,
             cursor_x: 0,
             cursor_y: 0,
             rows: Vec::new(),
@@ -40,7 +42,10 @@ impl Editor {
         self.draw_rows();
         let _ = execute!(
             stdout(),
-            MoveTo(self.cursor_x as u16, (self.cursor_y - self.row_off) as u16),
+            MoveTo(
+                (self.cursor_x - self.col_off) as u16,
+                (self.cursor_y - self.row_off) as u16
+            ),
             Show
         );
     }
@@ -65,10 +70,16 @@ impl Editor {
                 } else {
                     buffer.push('~');
                 }
-            } else if self.rows[file_row].len() > self.screen_cols {
-                buffer.push_str(&self.rows[file_row][0..self.screen_cols]);
+            } else if self.col_off > self.rows[file_row].len() {
+                buffer.push('~');
             } else {
-                buffer.push_str(&self.rows[file_row]);
+                let row = &self.rows[file_row][self.col_off..];
+                let len = row.len();
+                if len > self.screen_cols {
+                    buffer.push_str(&row[..self.screen_cols]);
+                } else {
+                    buffer.push_str(row);
+                }
             }
 
             buffer.push_str(&format!("{}", Clear(ClearType::UntilNewLine)));
@@ -128,18 +139,30 @@ impl Editor {
                 }
             }
             KeyCode::Down => {
-                if self.cursor_y < self.rows.len() {
+                if self.rows.is_empty() {
+                    if self.cursor_y < self.screen_rows {
+                        self.cursor_y += 1;
+                    }
+                } else if self.cursor_y < self.rows.len() {
                     self.cursor_y += 1;
                 }
             }
             KeyCode::Left => {
                 if self.cursor_x > 0 {
                     self.cursor_x -= 1;
+                } else if self.cursor_y > 0 {
+                    self.cursor_y -= 1;
+                    self.cursor_x = self.rows[self.cursor_y].len();
                 }
             }
             KeyCode::Right => {
-                if self.cursor_x < self.screen_cols {
-                    self.cursor_x += 1;
+                if let Some(row) = self.rows.get(self.cursor_y) {
+                    if self.cursor_x < row.len() {
+                        self.cursor_x += 1;
+                    } else if self.cursor_y < self.rows.len() {
+                        self.cursor_y += 1;
+                        self.cursor_x = 0;
+                    }
                 }
             }
             KeyCode::PageUp => {
@@ -155,6 +178,12 @@ impl Editor {
                 self.cursor_x = self.screen_cols;
             }
             _ => {}
+        }
+
+        if let Some(row) = self.rows.get(self.cursor_y) {
+            if self.cursor_x > row.len() {
+                self.cursor_x = row.len();
+            }
         }
     }
 
@@ -179,6 +208,12 @@ impl Editor {
         }
         if self.cursor_y >= self.row_off + self.screen_rows {
             self.row_off = self.cursor_y - self.screen_rows + 1;
+        }
+        if self.cursor_x < self.col_off {
+            self.col_off = self.cursor_x;
+        }
+        if self.cursor_x >= self.col_off + self.screen_cols {
+            self.col_off = self.cursor_x - self.screen_cols + 1;
         }
     }
 }
