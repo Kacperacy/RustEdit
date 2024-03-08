@@ -1,20 +1,18 @@
 use std::{
     fs::File,
-    io::{stdout, BufRead, BufReader, Write},
+    io::{BufRead, BufReader},
     time::Duration,
 };
 
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
-    execute,
-    style::Stylize,
-    terminal::{disable_raw_mode, Clear, ClearType},
+    terminal::{disable_raw_mode, enable_raw_mode, DisableLineWrap, EnableLineWrap},
 };
 
-const VERSION: &str = "0.0.1";
+use crate::screen::*;
 
 pub struct Editor {
+    screen: Screen,
     screen_rows: usize,
     screen_cols: usize,
     row_off: usize,
@@ -29,9 +27,11 @@ pub struct Editor {
 
 impl Editor {
     pub fn new() -> Self {
-        let (screen_cols, screen_rows) = crossterm::terminal::size().unwrap();
+        let (screen_cols, mut screen_rows) = crossterm::terminal::size().unwrap();
+        screen_rows -= 2;
         Self {
-            screen_rows: (screen_rows - 2) as usize,
+            screen: Screen::new(None, screen_rows as usize),
+            screen_rows: screen_rows as usize,
             screen_cols: screen_cols as usize,
             row_off: 0,
             col_off: 0,
@@ -44,80 +44,30 @@ impl Editor {
         }
     }
 
-    pub fn refresh_screen(&mut self) {
-        self.scroll();
-        let _ = execute!(stdout(), Hide, MoveTo(0, 0), Clear(ClearType::Purge));
+    pub fn run(&mut self) {
+        let _ = enable_raw_mode();
+        let _ = DisableLineWrap;
 
-        let mut buffer = String::new();
-        self.draw_rows(&mut buffer);
-        self.draw_status_bar(&mut buffer);
-        self.draw_status_message(&mut buffer);
-        stdout().write_all(buffer.as_bytes()).unwrap();
+        loop {
+            self.scroll();
+            self.screen.refresh_screen(
+                &self.rows,
+                self.row_off,
+                self.col_off,
+                self.cursor_x,
+                self.cursor_y,
+                &self.status,
+            );
 
-        let _ = execute!(
-            stdout(),
-            MoveTo(
-                (self.cursor_x - self.col_off) as u16,
-                (self.cursor_y - self.row_off) as u16
-            ),
-            Show
-        );
-    }
-
-    pub fn draw_rows(&self, buffer: &mut String) {
-        for i in 0..self.screen_rows {
-            let file_row = i + self.row_off;
-            if file_row >= self.rows.len() {
-                if self.rows.is_empty() && i == self.screen_rows / 3 {
-                    let message = "rust-edit v.".to_string() + VERSION + " - Press Ctrl-Q to quit";
-                    let len = message.len();
-                    let padding = (self.screen_cols - len) / 2;
-                    if padding > 0 {
-                        buffer.push('~');
-                        for _ in 0..padding - 1 {
-                            buffer.push(' ');
-                        }
-                        buffer.push_str(&message);
-                    }
-                } else {
-                    buffer.push('~');
-                }
-            } else if self.col_off > self.rows[file_row].len() {
-                buffer.push('~');
-            } else {
-                let row = &&self.rows[file_row][self.col_off..];
-                let len = row.len();
-                if len > self.screen_cols {
-                    buffer.push_str(&row[..self.screen_cols]);
-                } else {
-                    buffer.push_str(row);
-                }
+            if !self.process_keypress() {
+                break;
             }
-
-            buffer.push_str(&format!("{}", Clear(ClearType::UntilNewLine)));
-            buffer.push_str("\r\n");
         }
-    }
 
-    fn draw_status_bar(&self, buffer: &mut String) {
-        let mut status = format!(
-            "{} - line {} of {}",
-            self.filename.as_deref().unwrap_or("Untitled"),
-            self.cursor_y + 1,
-            self.rows.len()
-        );
+        self.screen.purge();
 
-        status.truncate(self.screen_cols);
-        let len = status.len();
-        for _ in len..self.screen_cols {
-            status.push(' ');
-        }
-        buffer.push_str(status.reverse().to_string().as_str());
-        buffer.push_str("\r\n");
-    }
-
-    fn draw_status_message(&self, buffer: &mut String) {
-        buffer.push_str(format!("{}{}", Clear(ClearType::CurrentLine), self.status).as_str());
+        let _ = EnableLineWrap;
+        let _ = disable_raw_mode();
     }
 
     pub fn set_status_message(&mut self, message: String) {
@@ -160,7 +110,7 @@ impl Editor {
 
     pub fn die<S: Into<String>>(&mut self, message: S) {
         let _ = disable_raw_mode();
-        self.refresh_screen();
+        self.screen.purge();
         eprintln!("{}: {}", message.into(), std::io::Error::last_os_error());
         std::process::exit(1);
     }
@@ -225,10 +175,6 @@ impl Editor {
         }
     }
 
-    pub fn purge(&self) {
-        let _ = execute!(stdout(), MoveTo(0, 0), Clear(ClearType::Purge));
-    }
-
     pub fn open(&mut self, _filename: Option<&String>) {
         if let Some(filename) = _filename {
             if let Ok(file) = File::open(filename) {
@@ -237,6 +183,7 @@ impl Editor {
                     self.rows.push(line);
                 }
                 self.filename = Some(filename.clone());
+                self.screen.set_filename(Some(filename.clone()));
             }
         }
     }

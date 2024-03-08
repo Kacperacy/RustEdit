@@ -1,26 +1,13 @@
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, DisableLineWrap, EnableLineWrap};
-
 mod editor;
 use editor::*;
+
+mod screen;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
 
-    let _ = enable_raw_mode();
-    let _ = DisableLineWrap;
-
     let mut editor = Editor::new();
     editor.open(args.get(1));
     editor.set_status_message("HELP: Ctrl-Q = quit".into());
-
-    loop {
-        editor.refresh_screen();
-        if !editor.process_keypress() {
-            break;
-        }
-    }
-    editor.purge();
-
-    let _ = EnableLineWrap;
-    let _ = disable_raw_mode();
+    editor.run();
 }
