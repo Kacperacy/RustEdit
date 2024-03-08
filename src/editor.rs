@@ -7,6 +7,7 @@ use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
     execute,
+    style::Stylize,
     terminal::{disable_raw_mode, Clear, ClearType},
 };
 
@@ -20,26 +21,33 @@ pub struct Editor {
     cursor_x: usize,
     cursor_y: usize,
     rows: Vec<String>,
+    filename: Option<String>,
 }
 
 impl Editor {
     pub fn new() -> Self {
         let (screen_cols, screen_rows) = crossterm::terminal::size().unwrap();
         Self {
-            screen_rows: screen_rows as usize,
+            screen_rows: (screen_rows - 1) as usize,
             screen_cols: screen_cols as usize,
             row_off: 0,
             col_off: 0,
             cursor_x: 0,
             cursor_y: 0,
             rows: Vec::new(),
+            filename: None,
         }
     }
 
     pub fn refresh_screen(&mut self) {
         self.scroll();
         let _ = execute!(stdout(), Hide, MoveTo(0, 0), Clear(ClearType::Purge));
-        self.draw_rows();
+
+        let mut buffer = String::new();
+        self.draw_rows(&mut buffer);
+        self.draw_status_bar(&mut buffer);
+        stdout().write_all(buffer.as_bytes()).unwrap();
+
         let _ = execute!(
             stdout(),
             MoveTo(
@@ -50,9 +58,7 @@ impl Editor {
         );
     }
 
-    pub fn draw_rows(&self) {
-        let mut buffer = String::new();
-
+    pub fn draw_rows(&self, buffer: &mut String) {
         for i in 0..self.screen_rows {
             let file_row = i + self.row_off;
             if file_row >= self.rows.len() {
@@ -73,7 +79,7 @@ impl Editor {
             } else if self.col_off > self.rows[file_row].len() {
                 buffer.push('~');
             } else {
-                let row = &self.rows[file_row][self.col_off..];
+                let row = &&self.rows[file_row][self.col_off..];
                 let len = row.len();
                 if len > self.screen_cols {
                     buffer.push_str(&row[..self.screen_cols]);
@@ -84,11 +90,24 @@ impl Editor {
 
             buffer.push_str(&format!("{}", Clear(ClearType::UntilNewLine)));
 
-            if i < self.screen_rows - 1 {
-                buffer.push_str("\r\n");
-            }
+            buffer.push_str("\r\n");
         }
-        stdout().write_all(buffer.as_bytes()).unwrap();
+    }
+
+    fn draw_status_bar(&self, buffer: &mut String) {
+        let mut status = format!(
+            "{} - line {} of {}",
+            self.filename.as_deref().unwrap_or("Untitled"),
+            self.cursor_y + 1,
+            self.rows.len()
+        );
+
+        status.truncate(self.screen_cols);
+        let len = status.len();
+        for _ in len..self.screen_cols {
+            status.push(' ');
+        }
+        buffer.push_str(status.reverse().to_string().as_str());
     }
 
     pub fn read_key(&mut self) -> Result<KeyEvent, ()> {
@@ -151,8 +170,10 @@ impl Editor {
                 if self.cursor_x > 0 {
                     self.cursor_x -= 1;
                 } else if self.cursor_y > 0 {
-                    self.cursor_y -= 1;
-                    self.cursor_x = self.rows[self.cursor_y].len();
+                    if let Some(row) = self.rows.get(self.cursor_y - 1) {
+                        self.cursor_y -= 1;
+                        self.cursor_x = row.len();
+                    }
                 }
             }
             KeyCode::Right => {
@@ -166,16 +187,18 @@ impl Editor {
                 }
             }
             KeyCode::PageUp => {
-                self.cursor_y = 0;
+                self.cursor_y = self.row_off;
             }
             KeyCode::PageDown => {
-                self.cursor_y = self.screen_rows;
+                self.cursor_y = self.row_off + self.screen_rows - 1;
             }
             KeyCode::Home => {
                 self.cursor_x = 0;
             }
             KeyCode::End => {
-                self.cursor_x = self.screen_cols;
+                if let Some(row) = self.rows.get(self.cursor_y) {
+                    self.cursor_x = row.len();
+                }
             }
             _ => {}
         }
@@ -195,9 +218,10 @@ impl Editor {
         if let Some(filename) = _filename {
             if let Ok(file) = File::open(filename) {
                 let reader = BufReader::new(file);
-                for line in reader.lines() {
-                    self.rows.push(line.unwrap());
+                for line in reader.lines().map_while(Result::ok) {
+                    self.rows.push(line);
                 }
+                self.filename = Some(filename.clone());
             }
         }
     }

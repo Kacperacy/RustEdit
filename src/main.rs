@@ -20,6 +20,6 @@ fn main() {
     }
     editor.purge();
 
-    let _ = disable_raw_mode();
     let _ = EnableLineWrap;
+    let _ = disable_raw_mode();
 }
