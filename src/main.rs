@@ -11,6 +11,7 @@ fn main() {
 
     let mut editor = Editor::new();
     editor.open(args.get(1));
+    editor.set_status_message("HELP: Ctrl-Q = quit".into());
 
     loop {
         editor.refresh_screen();

@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{stdout, BufRead, BufReader, Write},
+    time::Duration,
 };
 
 use crossterm::{
@@ -20,6 +21,8 @@ pub struct Editor {
     col_off: usize,
     cursor_x: usize,
     cursor_y: usize,
+    status: String,
+    status_time: Duration,
     rows: Vec<String>,
     filename: Option<String>,
 }
@@ -28,7 +31,7 @@ impl Editor {
     pub fn new() -> Self {
         let (screen_cols, screen_rows) = crossterm::terminal::size().unwrap();
         Self {
-            screen_rows: (screen_rows - 1) as usize,
+            screen_rows: (screen_rows - 2) as usize,
             screen_cols: screen_cols as usize,
             row_off: 0,
             col_off: 0,
@@ -36,6 +39,8 @@ impl Editor {
             cursor_y: 0,
             rows: Vec::new(),
             filename: None,
+            status: String::new(),
+            status_time: Duration::new(0, 0),
         }
     }
 
@@ -46,6 +51,7 @@ impl Editor {
         let mut buffer = String::new();
         self.draw_rows(&mut buffer);
         self.draw_status_bar(&mut buffer);
+        self.draw_status_message(&mut buffer);
         stdout().write_all(buffer.as_bytes()).unwrap();
 
         let _ = execute!(
@@ -89,7 +95,6 @@ impl Editor {
             }
 
             buffer.push_str(&format!("{}", Clear(ClearType::UntilNewLine)));
-
             buffer.push_str("\r\n");
         }
     }
@@ -108,6 +113,16 @@ impl Editor {
             status.push(' ');
         }
         buffer.push_str(status.reverse().to_string().as_str());
+        buffer.push_str("\r\n");
+    }
+
+    fn draw_status_message(&self, buffer: &mut String) {
+        buffer.push_str(format!("{}{}", Clear(ClearType::CurrentLine), self.status).as_str());
+    }
+
+    pub fn set_status_message(&mut self, message: String) {
+        self.status = message;
+        self.status_time = Duration::new(0, 0)
     }
 
     pub fn read_key(&mut self) -> Result<KeyEvent, ()> {
