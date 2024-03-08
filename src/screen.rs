@@ -29,7 +29,7 @@ impl Screen {
         }
     }
 
-    pub fn flush(&mut self) {
+    fn flush(&mut self) {
         self.stdout.flush().unwrap();
     }
 
@@ -81,9 +81,9 @@ impl Screen {
             let file_row = i + row_off;
             if file_row >= rows.len() {
                 if rows.is_empty() && i == self.height / 3 {
-                    let message = "rust-edit v.".to_string() + VERSION + " - Press Ctrl-Q to quit";
+                    let message = "rust-edit v.".to_string() + VERSION;
                     let len = message.len();
-                    let padding = (self.height - len) / 2;
+                    let padding = (self.width - len) / 2;
                     if padding > 0 {
                         self.queue("~");
                         for _ in 0..padding - 1 {

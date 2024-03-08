@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write},
     time::Duration,
 };
 
@@ -44,6 +44,26 @@ impl Editor {
         }
     }
 
+    fn die<S: Into<String>>(&mut self, message: S) {
+        let _ = disable_raw_mode();
+        self.screen.purge();
+        eprintln!("{}: {}", message.into(), std::io::Error::last_os_error());
+        std::process::exit(1);
+    }
+
+    pub fn open(&mut self, _filename: Option<&String>) {
+        if let Some(filename) = _filename {
+            if let Ok(file) = File::open(filename) {
+                let reader = BufReader::new(file);
+                for line in reader.lines().map_while(Result::ok) {
+                    self.rows.push(line);
+                }
+                self.filename = Some(filename.clone());
+                self.screen.set_filename(Some(filename.clone()));
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         let _ = enable_raw_mode();
         let _ = DisableLineWrap;
@@ -75,7 +95,7 @@ impl Editor {
         self.status_time = Duration::new(0, 0)
     }
 
-    pub fn read_key(&mut self) -> Result<KeyEvent, ()> {
+    fn read_key(&mut self) -> Result<KeyEvent, ()> {
         if let Ok(Key(key)) = read() {
             Ok(key)
         } else {
@@ -84,38 +104,39 @@ impl Editor {
         }
     }
 
-    pub fn process_keypress(&mut self) -> bool {
-        match self.read_key() {
-            Ok(c) => {
-                if c.code == KeyCode::Char('q') && KeyModifiers::CONTROL == c.modifiers {
-                    false
-                } else if c.code == KeyCode::Up
-                    || c.code == KeyCode::Down
-                    || c.code == KeyCode::Left
-                    || c.code == KeyCode::Right
-                    || c.code == KeyCode::PageUp
-                    || c.code == KeyCode::PageDown
-                    || c.code == KeyCode::Home
-                    || c.code == KeyCode::End
-                {
-                    self.move_cursor(c);
-                    true
-                } else {
-                    true
+    fn process_keypress(&mut self) -> bool {
+        matches!(self.read_key(), Ok(c) if {
+            if KeyModifiers::CONTROL == c.modifiers {
+                if c.code == KeyCode::Char('q') {
+                    return false
+                } else if c.code == KeyCode::Char('s') {
+                    self.save();
+                }
+                true
+            } else if c.code == KeyCode::Up
+                || c.code == KeyCode::Down
+                || c.code == KeyCode::Left
+                || c.code == KeyCode::Right
+                || c.code == KeyCode::PageUp
+                || c.code == KeyCode::PageDown
+                || c.code == KeyCode::Home
+                || c.code == KeyCode::End
+            {
+                self.move_cursor(c);
+                true
+            } else {
+                match c.code {
+                    KeyCode::Char(c) => {
+                        self.insert_char(c);
+                        true
+                    }
+                    _ => true,
                 }
             }
-            Err(_) => false,
-        }
+        })
     }
 
-    pub fn die<S: Into<String>>(&mut self, message: S) {
-        let _ = disable_raw_mode();
-        self.screen.purge();
-        eprintln!("{}: {}", message.into(), std::io::Error::last_os_error());
-        std::process::exit(1);
-    }
-
-    pub fn move_cursor(&mut self, key: KeyEvent) {
+    fn move_cursor(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Up => {
                 if self.cursor_y > 0 {
@@ -172,23 +193,12 @@ impl Editor {
             if self.cursor_x > row.len() {
                 self.cursor_x = row.len();
             }
+        } else {
+            self.cursor_x = 0;
         }
     }
 
-    pub fn open(&mut self, _filename: Option<&String>) {
-        if let Some(filename) = _filename {
-            if let Ok(file) = File::open(filename) {
-                let reader = BufReader::new(file);
-                for line in reader.lines().map_while(Result::ok) {
-                    self.rows.push(line);
-                }
-                self.filename = Some(filename.clone());
-                self.screen.set_filename(Some(filename.clone()));
-            }
-        }
-    }
-
-    pub fn scroll(&mut self) {
+    fn scroll(&mut self) {
         if self.cursor_y < self.row_off {
             self.row_off = self.cursor_y;
         }
@@ -200,6 +210,24 @@ impl Editor {
         }
         if self.cursor_x >= self.col_off + self.screen_cols {
             self.col_off = self.cursor_x - self.screen_cols + 1;
+        }
+    }
+
+    fn insert_char(&mut self, c: char) {
+        if self.cursor_y == self.rows.len() {
+            self.rows.push(c.to_string());
+        }
+        self.rows[self.cursor_y].insert(self.cursor_x, c);
+        self.cursor_x += 1;
+    }
+
+    fn save(&mut self) {
+        if let Some(filename) = &self.filename {
+            let mut file = File::create(filename).unwrap();
+            for row in &self.rows {
+                file.write_all(row.as_bytes()).unwrap();
+                file.write_all(b"\n").unwrap();
+            }
         }
     }
 }
