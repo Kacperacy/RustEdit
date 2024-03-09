@@ -60,6 +60,10 @@ impl Editor {
                 }
                 self.filename = Some(filename.clone());
                 self.screen.set_filename(Some(filename.clone()));
+            } else {
+                File::create(filename).unwrap();
+                self.filename = Some(filename.clone());
+                self.screen.set_filename(Some(filename.clone()));
             }
         }
     }
