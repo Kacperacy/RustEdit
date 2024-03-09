@@ -218,8 +218,8 @@ impl Editor {
     }
 
     fn insert_char(&mut self, c: char) {
-        if self.cursor_y == self.rows.len() {
-            self.rows.push(c.to_string());
+        while self.cursor_y >= self.rows.len() {
+            self.rows.push(String::new());
         }
         self.rows[self.cursor_y].insert(self.cursor_x, c);
         self.cursor_x += 1;
