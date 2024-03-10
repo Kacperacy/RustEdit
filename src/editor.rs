@@ -232,6 +232,12 @@ impl Editor {
                 file.write_all(row.as_bytes()).unwrap();
                 file.write_all(b"\n").unwrap();
             }
+            self.set_status_message(format!(
+                "{} bytes written to disk",
+                file.metadata().unwrap().len()
+            ));
+        } else {
+            self.set_status_message("Can't save, no filename".to_string());
         }
     }
 }
