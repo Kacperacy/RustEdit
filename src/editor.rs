@@ -11,14 +11,23 @@ use crossterm::{
 
 use crate::screen::*;
 
+#[derive(Clone, Copy)]
+pub struct Position {
+    pub x: usize,
+    pub y: usize,
+}
+
+#[derive(Clone, Copy)]
+pub struct Size {
+    pub rows: usize,
+    pub cols: usize,
+}
+
 pub struct Editor {
     screen: Screen,
-    screen_rows: usize,
-    screen_cols: usize,
-    row_off: usize,
-    col_off: usize,
-    cursor_x: usize,
-    cursor_y: usize,
+    screen_size: Size,
+    offset: Size,
+    cursor: Position,
     status: String,
     status_time: Duration,
     rows: Vec<String>,
@@ -31,12 +40,12 @@ impl Editor {
         screen_rows -= 2;
         Self {
             screen: Screen::new(None, screen_rows as usize),
-            screen_rows: screen_rows as usize,
-            screen_cols: screen_cols as usize,
-            row_off: 0,
-            col_off: 0,
-            cursor_x: 0,
-            cursor_y: 0,
+            screen_size: Size {
+                rows: screen_rows as usize,
+                cols: screen_cols as usize,
+            },
+            offset: Size { rows: 0, cols: 0 },
+            cursor: Position { x: 0, y: 0 },
             rows: Vec::new(),
             filename: None,
             status: String::new(),
@@ -74,14 +83,8 @@ impl Editor {
 
         loop {
             self.scroll();
-            self.screen.refresh_screen(
-                &self.rows,
-                self.row_off,
-                self.col_off,
-                self.cursor_x,
-                self.cursor_y,
-                &self.status,
-            );
+            self.screen
+                .refresh_screen(&self.rows, self.offset, self.cursor, &self.status);
 
             if !self.process_keypress() {
                 break;
@@ -143,86 +146,86 @@ impl Editor {
     fn move_cursor(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Up => {
-                if self.cursor_y > 0 {
-                    self.cursor_y -= 1;
+                if self.cursor.y > 0 {
+                    self.cursor.y -= 1;
                 }
             }
             KeyCode::Down => {
                 if self.rows.is_empty() {
-                    if self.cursor_y < self.screen_rows {
-                        self.cursor_y += 1;
+                    if self.cursor.y < self.screen_size.rows {
+                        self.cursor.y += 1;
                     }
-                } else if self.cursor_y < self.rows.len() {
-                    self.cursor_y += 1;
+                } else if self.cursor.y < self.rows.len() {
+                    self.cursor.y += 1;
                 }
             }
             KeyCode::Left => {
-                if self.cursor_x > 0 {
-                    self.cursor_x -= 1;
-                } else if self.cursor_y > 0 {
-                    if let Some(row) = self.rows.get(self.cursor_y - 1) {
-                        self.cursor_y -= 1;
-                        self.cursor_x = row.len();
+                if self.cursor.x > 0 {
+                    self.cursor.x -= 1;
+                } else if self.cursor.y > 0 {
+                    if let Some(row) = self.rows.get(self.cursor.y - 1) {
+                        self.cursor.y -= 1;
+                        self.cursor.x = row.len();
                     }
                 }
             }
             KeyCode::Right => {
-                if let Some(row) = self.rows.get(self.cursor_y) {
-                    if self.cursor_x < row.len() {
-                        self.cursor_x += 1;
-                    } else if self.cursor_y < self.rows.len() {
-                        self.cursor_y += 1;
-                        self.cursor_x = 0;
+                if let Some(row) = self.rows.get(self.cursor.y) {
+                    if self.cursor.x < row.len() {
+                        self.cursor.x += 1;
+                    } else if self.cursor.y < self.rows.len() {
+                        self.cursor.y += 1;
+                        self.cursor.x = 0;
                     }
                 }
             }
             KeyCode::PageUp => {
-                self.cursor_y = self.row_off;
+                self.cursor.y = self.offset.rows;
             }
             KeyCode::PageDown => {
-                self.cursor_y = self.row_off + self.screen_rows - 1;
+                self.cursor.y = self.offset.rows + self.screen_size.rows - 1;
             }
             KeyCode::Home => {
-                self.cursor_x = 0;
+                self.cursor.x = 0;
             }
             KeyCode::End => {
-                if let Some(row) = self.rows.get(self.cursor_y) {
-                    self.cursor_x = row.len();
+                if let Some(row) = self.rows.get(self.cursor.y) {
+                    self.cursor.x = row.len();
                 }
             }
             _ => {}
         }
 
-        if let Some(row) = self.rows.get(self.cursor_y) {
-            if self.cursor_x > row.len() {
-                self.cursor_x = row.len();
+        if let Some(row) = self.rows.get(self.cursor.y) {
+            if self.cursor.x > row.len() {
+                self.cursor.x = row.len();
             }
         } else {
-            self.cursor_x = 0;
+            self.cursor.x = 0;
         }
     }
 
     fn scroll(&mut self) {
-        if self.cursor_y < self.row_off {
-            self.row_off = self.cursor_y;
+        if self.cursor.y < self.offset.rows {
+            self.offset.rows = self.cursor.y;
         }
-        if self.cursor_y >= self.row_off + self.screen_rows {
-            self.row_off = self.cursor_y - self.screen_rows + 1;
+        if self.cursor.y >= self.offset.rows + self.screen_size.rows {
+            self.offset.rows = self.cursor.y - self.screen_size.rows + 1;
         }
-        if self.cursor_x < self.col_off {
-            self.col_off = self.cursor_x;
+        if self.cursor.x < self.offset.cols {
+            self.offset.cols = self.cursor.x;
         }
-        if self.cursor_x >= self.col_off + self.screen_cols {
-            self.col_off = self.cursor_x - self.screen_cols + 1;
+        if self.cursor.x >= self.offset.cols + self.screen_size.cols {
+            self.offset.cols = self.cursor.x - self.screen_size.cols + 1;
         }
     }
 
     fn insert_char(&mut self, c: char) {
-        while self.cursor_y >= self.rows.len() {
+        while self.cursor.y >= self.rows.len() {
             self.rows.push(String::new());
         }
-        self.rows[self.cursor_y].insert(self.cursor_x, c);
-        self.cursor_x += 1;
+        self.rows[self.cursor.y].insert(self.cursor.x, c);
+        self.cursor.x += 1;
     }
 
     fn save(&mut self) {

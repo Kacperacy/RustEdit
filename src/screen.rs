@@ -7,6 +7,8 @@ use crossterm::{
     QueueableCommand,
 };
 
+use crate::{Position, Size};
+
 const VERSION: &str = "0.0.1";
 
 pub struct Screen {
@@ -52,23 +54,21 @@ impl Screen {
     pub fn refresh_screen(
         &mut self,
         rows: &[String],
-        row_off: usize,
-        col_off: usize,
-        cursor_x: usize,
-        cursor_y: usize,
+        offset: Size,
+        cursor: Position,
         status: &str,
     ) {
         self.stdout.queue(Hide).unwrap();
         self.purge();
 
-        self.draw_rows(rows, row_off, col_off);
-        self.draw_status_bar(rows, cursor_y);
+        self.draw_rows(rows, offset);
+        self.draw_status_bar(rows, cursor.y);
         self.draw_status_message(status);
 
         self.stdout
             .queue(MoveTo(
-                (cursor_x - col_off) as u16,
-                (cursor_y - row_off) as u16,
+                (cursor.x - offset.cols) as u16,
+                (cursor.y - offset.rows) as u16,
             ))
             .unwrap()
             .queue(Show)
@@ -76,9 +76,9 @@ impl Screen {
         self.flush();
     }
 
-    fn draw_rows(&mut self, rows: &[String], row_off: usize, col_off: usize) {
+    fn draw_rows(&mut self, rows: &[String], offset: Size) {
         for i in 0..self.height {
-            let file_row = i + row_off;
+            let file_row = i + offset.rows;
             if file_row >= rows.len() {
                 if rows.is_empty() && i == self.height / 3 {
                     let message = "rust-edit v.".to_string() + VERSION;
@@ -94,10 +94,10 @@ impl Screen {
                 } else {
                     self.queue("~");
                 }
-            } else if col_off > rows[file_row].len() {
+            } else if offset.cols > rows[file_row].len() {
                 self.queue("~");
             } else {
-                let row = &&rows[file_row][col_off..];
+                let row = &&rows[file_row][offset.cols..];
                 let len = row.len();
                 if len > self.width {
                     self.queue(&row[..self.width]);
