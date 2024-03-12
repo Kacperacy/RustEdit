@@ -57,12 +57,13 @@ impl Screen {
         offset: Size,
         cursor: Position,
         status: &str,
+        dirty: bool,
     ) {
         self.stdout.queue(Hide).unwrap();
         self.purge();
 
         self.draw_rows(rows, offset);
-        self.draw_status_bar(rows, cursor.y);
+        self.draw_status_bar(rows, cursor.y, dirty);
         self.draw_status_message(status);
 
         self.stdout
@@ -111,12 +112,13 @@ impl Screen {
         }
     }
 
-    fn draw_status_bar(&mut self, rows: &[String], cursor_y: usize) {
+    fn draw_status_bar(&mut self, rows: &[String], cursor_y: usize, dirty: bool) {
         let mut status = format!(
-            "{} - line {} of {}",
+            "{} - line {} of {} {}",
             self.filename.as_deref().unwrap_or("Untitled"),
             cursor_y + 1,
-            rows.len()
+            rows.len(),
+            if dirty { "(modified)" } else { "" }
         );
 
         status.truncate(self.width);

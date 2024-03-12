@@ -32,6 +32,7 @@ pub struct Editor {
     status_time: Duration,
     rows: Vec<String>,
     filename: Option<String>,
+    dirty: bool,
 }
 
 impl Editor {
@@ -50,6 +51,7 @@ impl Editor {
             filename: None,
             status: String::new(),
             status_time: Duration::new(0, 0),
+            dirty: false,
         }
     }
 
@@ -74,6 +76,7 @@ impl Editor {
                 self.filename = Some(filename.clone());
                 self.screen.set_filename(Some(filename.clone()));
             }
+            self.dirty = false;
         }
     }
 
@@ -83,8 +86,13 @@ impl Editor {
 
         loop {
             self.scroll();
-            self.screen
-                .refresh_screen(&self.rows, self.offset, self.cursor, &self.status);
+            self.screen.refresh_screen(
+                &self.rows,
+                self.offset,
+                self.cursor,
+                &self.status,
+                self.dirty,
+            );
 
             if !self.process_keypress() {
                 break;
@@ -226,6 +234,7 @@ impl Editor {
         }
         self.rows[self.cursor.y].insert(self.cursor.x, c);
         self.cursor.x += 1;
+        self.dirty = true;
     }
 
     fn save(&mut self) {
@@ -239,6 +248,7 @@ impl Editor {
                 "{} bytes written to disk",
                 file.metadata().unwrap().len()
             ));
+            self.dirty = false;
         } else {
             self.set_status_message("Can't save, no filename".to_string());
         }
