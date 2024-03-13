@@ -11,6 +11,8 @@ use crossterm::{
 
 use crate::screen::*;
 
+const QUIT_TIMES: u8 = 3;
+
 #[derive(Clone, Copy)]
 pub struct Position {
     pub x: usize,
@@ -33,6 +35,7 @@ pub struct Editor {
     rows: Vec<String>,
     filename: Option<String>,
     dirty: bool,
+    quit_times: u8,
 }
 
 impl Editor {
@@ -52,6 +55,7 @@ impl Editor {
             status: String::new(),
             status_time: Duration::new(0, 0),
             dirty: false,
+            quit_times: QUIT_TIMES,
         }
     }
 
@@ -110,45 +114,48 @@ impl Editor {
         self.status_time = Duration::new(0, 0)
     }
 
-    fn read_key(&mut self) -> Result<KeyEvent, ()> {
+    fn read_key(&mut self) -> KeyEvent {
         if let Ok(Key(key)) = read() {
-            Ok(key)
+            key
         } else {
             self.die("Read error");
-            Err(())
+            unreachable!()
         }
     }
 
     fn process_keypress(&mut self) -> bool {
-        matches!(self.read_key(), Ok(c) if {
-            if KeyModifiers::CONTROL == c.modifiers {
-                if c.code == KeyCode::Char('q') {
-                    return false
-                } else if c.code == KeyCode::Char('s') {
-                    self.save();
+        let c = self.read_key();
+
+        if KeyModifiers::CONTROL == c.modifiers {
+            if c.code == KeyCode::Char('q') {
+                if self.dirty {
+                    self.quit_times -= 1;
+                    self.set_status_message(format!(
+                        "WARNING!!! File has unsaved changes. Press Ctrl-Q {} more time(s) to quit.",
+                        self.quit_times
+                    ));
+                    return self.quit_times != 0;
+                } else {
+                    return false;
                 }
-                true
-            } else if c.code == KeyCode::Up
-                || c.code == KeyCode::Down
-                || c.code == KeyCode::Left
-                || c.code == KeyCode::Right
-                || c.code == KeyCode::PageUp
-                || c.code == KeyCode::PageDown
-                || c.code == KeyCode::Home
-                || c.code == KeyCode::End
-            {
-                self.move_cursor(c);
-                true
-            } else {
-                match c.code {
-                    KeyCode::Char(c) => {
-                        self.insert_char(c);
-                        true
-                    }
-                    _ => true,
-                }
+            } else if c.code == KeyCode::Char('s') {
+                self.save();
             }
-        })
+        } else if c.code == KeyCode::Up
+            || c.code == KeyCode::Down
+            || c.code == KeyCode::Left
+            || c.code == KeyCode::Right
+            || c.code == KeyCode::PageUp
+            || c.code == KeyCode::PageDown
+            || c.code == KeyCode::Home
+            || c.code == KeyCode::End
+        {
+            self.move_cursor(c);
+        } else if let KeyCode::Char(c) = c.code {
+            self.insert_char(c);
+        }
+        self.quit_times = QUIT_TIMES;
+        true
     }
 
     fn move_cursor(&mut self, key: KeyEvent) {
