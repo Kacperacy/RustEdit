@@ -76,7 +76,6 @@ impl Editor {
                 self.filename = Some(filename.clone());
                 self.screen.set_filename(Some(filename.clone()));
             } else {
-                File::create(filename).unwrap();
                 self.filename = Some(filename.clone());
                 self.screen.set_filename(Some(filename.clone()));
             }
@@ -151,6 +150,8 @@ impl Editor {
             || c.code == KeyCode::End
         {
             self.move_cursor(c);
+        } else if c.code == KeyCode::Backspace {
+            self.delete_char();
         } else if let KeyCode::Char(c) = c.code {
             self.insert_char(c);
         }
@@ -242,6 +243,23 @@ impl Editor {
         self.rows[self.cursor.y].insert(self.cursor.x, c);
         self.cursor.x += 1;
         self.dirty = true;
+    }
+
+    fn delete_char(&mut self) {
+        if self.cursor.y >= self.rows.len() {
+            return;
+        }
+        if self.cursor.x > 0 {
+            self.rows[self.cursor.y].remove(self.cursor.x - 1);
+            self.cursor.x -= 1;
+            self.dirty = true;
+        } else if self.cursor.y > 0 {
+            let row = self.rows.remove(self.cursor.y);
+            self.cursor.y -= 1;
+            self.cursor.x = self.rows[self.cursor.y].len();
+            self.rows[self.cursor.y].push_str(&row);
+            self.dirty = true;
+        }
     }
 
     fn save(&mut self) {
