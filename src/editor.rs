@@ -152,6 +152,10 @@ impl Editor {
             self.move_cursor(c);
         } else if c.code == KeyCode::Backspace {
             self.delete_char();
+        } else if c.code == KeyCode::Enter {
+            self.rows.insert(self.cursor.y, String::new());
+            self.cursor.x = 0;
+            self.cursor.y += 1;
         } else if let KeyCode::Char(c) = c.code {
             self.insert_char(c);
         }
