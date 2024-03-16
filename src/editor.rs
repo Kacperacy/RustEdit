@@ -278,8 +278,40 @@ impl Editor {
                 file.metadata().unwrap().len()
             ));
             self.dirty = false;
-        } else {
-            self.set_status_message("Can't save, no filename".to_string());
+        } else if let Some(filename) = self.prompt("Save as: ") {
+            self.filename = Some(filename.clone());
+            self.screen.set_filename(Some(filename.clone()));
+            self.save();
+        }
+    }
+
+    fn prompt(&mut self, prompt: &str) -> Option<String> {
+        self.set_status_message(prompt.to_string());
+        let mut input = String::new();
+        loop {
+            self.set_status_message(format!("{}{}", prompt, input));
+            self.scroll();
+            self.screen.refresh_screen(
+                &self.rows,
+                self.offset,
+                self.cursor,
+                &self.status,
+                self.dirty,
+            );
+            let c = self.read_key();
+            if c.code == KeyCode::Esc {
+                self.set_status_message(String::new());
+                return None;
+            } else if c.code == KeyCode::Enter {
+                if !input.is_empty() {
+                    self.set_status_message(String::new());
+                    return Some(input);
+                }
+            } else if c.code == KeyCode::Backspace {
+                input.pop();
+            } else if let KeyCode::Char(c) = c.code {
+                input.push(c);
+            }
         }
     }
 }
