@@ -139,6 +139,8 @@ impl Editor {
                 }
             } else if c.code == KeyCode::Char('s') {
                 self.save();
+            } else if c.code == KeyCode::Char('f') {
+                self.find();
             }
         } else if c.code == KeyCode::Up
             || c.code == KeyCode::Down
@@ -282,6 +284,19 @@ impl Editor {
             self.filename = Some(filename.clone());
             self.screen.set_filename(Some(filename.clone()));
             self.save();
+        }
+    }
+
+    fn find(&mut self) {
+        if let Some(query) = self.prompt("Search: ") {
+            for i in 0..self.rows.len() {
+                if let Some(pos) = self.rows[i].find(&query) {
+                    self.cursor.y = i;
+                    self.cursor.x = pos;
+                    self.offset.rows = self.rows.len();
+                    break;
+                }
+            }
         }
     }
 
