@@ -280,15 +280,26 @@ impl Editor {
                 file.metadata().unwrap().len()
             ));
             self.dirty = false;
-        } else if let Some(filename) = self.prompt("Save as: ") {
+        } else if let Some(filename) = self.prompt("Save as: ", None) {
             self.filename = Some(filename.clone());
             self.screen.set_filename(Some(filename.clone()));
             self.save();
         }
     }
 
+    fn find_callback(&mut self, query: &str) {
+        for i in 0..self.rows.len() {
+            if let Some(pos) = self.rows[i].find(query) {
+                self.cursor.y = i;
+                self.cursor.x = pos;
+                self.offset.rows = self.rows.len();
+                break;
+            }
+        }
+    }
+
     fn find(&mut self) {
-        if let Some(query) = self.prompt("Search: ") {
+        if let Some(query) = self.prompt("Search: ", Some(Self::find_callback)) {
             for i in 0..self.rows.len() {
                 if let Some(pos) = self.rows[i].find(&query) {
                     self.cursor.y = i;
@@ -300,7 +311,7 @@ impl Editor {
         }
     }
 
-    fn prompt(&mut self, prompt: &str) -> Option<String> {
+    fn prompt(&mut self, prompt: &str, callback: Option<fn(&mut Self, &str)>) -> Option<String> {
         self.set_status_message(prompt.to_string());
         let mut input = String::new();
         loop {
@@ -324,8 +335,14 @@ impl Editor {
                 }
             } else if c.code == KeyCode::Backspace {
                 input.pop();
+                if let Some(callback) = callback {
+                    callback(self, &input);
+                }
             } else if let KeyCode::Char(c) = c.code {
                 input.push(c);
+                if let Some(callback) = callback {
+                    callback(self, &input);
+                }
             }
         }
     }
