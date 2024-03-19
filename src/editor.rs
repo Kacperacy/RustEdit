@@ -300,14 +300,7 @@ impl Editor {
 
     fn find(&mut self) {
         if let Some(query) = self.prompt("Search: ", Some(Self::find_callback)) {
-            for i in 0..self.rows.len() {
-                if let Some(pos) = self.rows[i].find(&query) {
-                    self.cursor.y = i;
-                    self.cursor.x = pos;
-                    self.offset.rows = self.rows.len();
-                    break;
-                }
-            }
+            self.find_callback(&query);
         }
     }
 
