@@ -313,6 +313,7 @@ impl Editor {
 
     fn prompt(&mut self, prompt: &str, callback: Option<fn(&mut Self, &str)>) -> Option<String> {
         self.set_status_message(prompt.to_string());
+        let cursor = self.cursor;
         let mut input = String::new();
         loop {
             self.set_status_message(format!("{}{}", prompt, input));
@@ -327,6 +328,7 @@ impl Editor {
             let c = self.read_key();
             if c.code == KeyCode::Esc {
                 self.set_status_message(String::new());
+                self.cursor = cursor;
                 return None;
             } else if c.code == KeyCode::Enter {
                 if !input.is_empty() {
