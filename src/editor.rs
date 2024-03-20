@@ -36,6 +36,7 @@ pub struct Editor {
     filename: Option<String>,
     dirty: bool,
     quit_times: u8,
+    find_num: u32,
 }
 
 impl Editor {
@@ -56,6 +57,7 @@ impl Editor {
             status_time: Duration::new(0, 0),
             dirty: false,
             quit_times: QUIT_TIMES,
+            find_num: 0,
         }
     }
 
@@ -288,14 +290,20 @@ impl Editor {
     }
 
     fn find_callback(&mut self, query: &str) {
+        let mut num = self.find_num;
         for i in 0..self.rows.len() {
             if let Some(pos) = self.rows[i].find(query) {
                 self.cursor.y = i;
                 self.cursor.x = pos;
                 self.offset.rows = self.rows.len();
-                break;
+
+                if num == 0 {
+                    break;
+                }
+                num -= 1;
             }
         }
+        self.find_num -= num;
     }
 
     fn find(&mut self) {
@@ -336,6 +344,16 @@ impl Editor {
             } else if let KeyCode::Char(c) = c.code {
                 input.push(c);
                 if let Some(callback) = callback {
+                    callback(self, &input);
+                }
+            } else if c.code == KeyCode::Up || c.code == KeyCode::Left {
+                if let Some(callback) = callback {
+                    self.find_num = self.find_num.saturating_sub(1);
+                    callback(self, &input);
+                }
+            } else if c.code == KeyCode::Down || c.code == KeyCode::Right {
+                if let Some(callback) = callback {
+                    self.find_num += 1;
                     callback(self, &input);
                 }
             }
