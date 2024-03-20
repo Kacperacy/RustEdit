@@ -313,6 +313,7 @@ impl Editor {
     }
 
     fn prompt(&mut self, prompt: &str, callback: Option<fn(&mut Self, &str)>) -> Option<String> {
+        self.find_num = 0;
         self.set_status_message(prompt.to_string());
         let cursor = self.cursor;
         let mut input = String::new();
