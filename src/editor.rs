@@ -36,7 +36,7 @@ pub struct Editor {
     filename: Option<String>,
     dirty: bool,
     quit_times: u8,
-    find_num: u32,
+    find_num: i32,
 }
 
 impl Editor {
@@ -281,15 +281,23 @@ impl Editor {
                 "{} bytes written to disk",
                 file.metadata().unwrap().len()
             ));
-            self.dirty = false;
         } else if let Some(filename) = self.prompt("Save as: ", None) {
             self.filename = Some(filename.clone());
             self.screen.set_filename(Some(filename.clone()));
             self.save();
         }
+        self.dirty = false;
     }
 
-    fn find_callback(&mut self, query: &str) {
+    fn find_callback(&mut self, query: &str, direction: i8) {
+        if direction != 0 {
+            if self.find_num == 0 && direction == -1 {
+                self.find_num = 0;
+            } else {
+                self.find_num += direction as i32;
+            }
+        }
+
         let mut num = self.find_num;
         for i in 0..self.rows.len() {
             if let Some(pos) = self.rows[i].find(query) {
@@ -308,18 +316,22 @@ impl Editor {
 
     fn find(&mut self) {
         if let Some(query) = self.prompt("Search: ", Some(Self::find_callback)) {
-            self.find_callback(&query);
+            self.find_callback(&query, 0);
         }
     }
 
-    fn prompt(&mut self, prompt: &str, callback: Option<fn(&mut Self, &str)>) -> Option<String> {
+    fn prompt(
+        &mut self,
+        prompt: &str,
+        callback: Option<fn(&mut Self, &str, i8)>,
+    ) -> Option<String> {
         self.find_num = 0;
         self.set_status_message(prompt.to_string());
         let cursor = self.cursor;
         let mut input = String::new();
         loop {
-            self.set_status_message(format!("{}{}", prompt, input));
             self.scroll();
+            self.set_status_message(format!("{}{}", prompt, input));
             self.screen.refresh_screen(
                 &self.rows,
                 self.offset,
@@ -340,22 +352,20 @@ impl Editor {
             } else if c.code == KeyCode::Backspace {
                 input.pop();
                 if let Some(callback) = callback {
-                    callback(self, &input);
+                    callback(self, &input, 0);
                 }
             } else if let KeyCode::Char(c) = c.code {
                 input.push(c);
                 if let Some(callback) = callback {
-                    callback(self, &input);
+                    callback(self, &input, 0);
                 }
             } else if c.code == KeyCode::Up || c.code == KeyCode::Left {
                 if let Some(callback) = callback {
-                    self.find_num = self.find_num.saturating_sub(1);
-                    callback(self, &input);
+                    callback(self, &input, -1);
                 }
             } else if c.code == KeyCode::Down || c.code == KeyCode::Right {
                 if let Some(callback) = callback {
-                    self.find_num += 1;
-                    callback(self, &input);
+                    callback(self, &input, 1);
                 }
             }
         }
