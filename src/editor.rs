@@ -61,6 +61,16 @@ impl Editor {
         }
     }
 
+    fn refresh(&mut self) {
+        self.screen.refresh_screen(
+            &self.rows,
+            self.offset,
+            self.cursor,
+            &self.status,
+            self.dirty,
+        );
+    }
+
     fn die<S: Into<String>>(&mut self, message: S) {
         let _ = disable_raw_mode();
         self.screen.purge();
@@ -91,13 +101,7 @@ impl Editor {
 
         loop {
             self.scroll();
-            self.screen.refresh_screen(
-                &self.rows,
-                self.offset,
-                self.cursor,
-                &self.status,
-                self.dirty,
-            );
+            self.refresh();
 
             if !self.process_keypress() {
                 break;
@@ -332,13 +336,7 @@ impl Editor {
         loop {
             self.scroll();
             self.set_status_message(format!("{}{}", prompt, input));
-            self.screen.refresh_screen(
-                &self.rows,
-                self.offset,
-                self.cursor,
-                &self.status,
-                self.dirty,
-            );
+            self.refresh();
             let c = self.read_key();
             if c.code == KeyCode::Esc {
                 self.set_status_message(String::new());
