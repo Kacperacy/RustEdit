@@ -99,6 +99,8 @@ impl Editor {
         let _ = enable_raw_mode();
         let _ = DisableLineWrap;
 
+        self.set_status_message("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find".into());
+
         loop {
             self.scroll();
             self.refresh();
