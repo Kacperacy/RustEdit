@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader, Write},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crossterm::{
@@ -12,6 +12,7 @@ use crossterm::{
 use crate::screen::*;
 
 const QUIT_TIMES: u8 = 3;
+const DEFAULT_MESSAGE: &str = "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find";
 
 #[derive(Clone, Copy)]
 pub struct Position {
@@ -37,6 +38,7 @@ pub struct Editor {
     dirty: bool,
     quit_times: u8,
     find_num: i32,
+    timer: Instant,
 }
 
 impl Editor {
@@ -58,10 +60,21 @@ impl Editor {
             dirty: false,
             quit_times: QUIT_TIMES,
             find_num: 0,
+            timer: Instant::now(),
+        }
+    }
+
+    fn handle_status_message(&mut self) {
+        if self.status_time != Duration::MAX
+            && self.timer.elapsed() >= self.status_time
+            && !self.status.is_empty()
+        {
+            self.set_status_message(DEFAULT_MESSAGE.into(), Duration::MAX);
         }
     }
 
     fn refresh(&mut self) {
+        self.handle_status_message();
         self.screen.refresh_screen(
             &self.rows,
             self.offset,
@@ -99,7 +112,7 @@ impl Editor {
         let _ = enable_raw_mode();
         let _ = DisableLineWrap;
 
-        self.set_status_message("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find".into());
+        self.set_status_message(DEFAULT_MESSAGE.into(), Duration::MAX);
 
         loop {
             self.scroll();
@@ -116,9 +129,15 @@ impl Editor {
         let _ = disable_raw_mode();
     }
 
-    pub fn set_status_message(&mut self, message: String) {
+    pub fn set_status_message(&mut self, message: String, time: Duration) {
         self.status = message;
-        self.status_time = Duration::new(0, 0)
+        self.status_time = time;
+        self.timer = Instant::now();
+    }
+
+    fn clear_status_message(&mut self) {
+        self.status = String::new();
+        self.status_time = Duration::new(0, 0);
     }
 
     fn read_key(&mut self) -> KeyEvent {
@@ -140,7 +159,7 @@ impl Editor {
                     self.set_status_message(format!(
                         "WARNING!!! File has unsaved changes. Press Ctrl-Q {} more time(s) to quit.",
                         self.quit_times
-                    ));
+                    ), Duration::MAX);
                     return self.quit_times != 0;
                 } else {
                     return false;
@@ -283,10 +302,10 @@ impl Editor {
                 file.write_all(row.as_bytes()).unwrap();
                 file.write_all(b"\n").unwrap();
             }
-            self.set_status_message(format!(
-                "{} bytes written to disk",
-                file.metadata().unwrap().len()
-            ));
+            self.set_status_message(
+                format!("{} bytes written to disk", file.metadata().unwrap().len()),
+                Duration::from_secs(2),
+            );
         } else if let Some(filename) = self.prompt("Save as: ", None) {
             self.filename = Some(filename.clone());
             self.screen.set_filename(Some(filename.clone()));
@@ -332,21 +351,21 @@ impl Editor {
         callback: Option<fn(&mut Self, &str, i8)>,
     ) -> Option<String> {
         self.find_num = 0;
-        self.set_status_message(prompt.to_string());
+        self.set_status_message(prompt.to_string(), Duration::MAX);
         let cursor = self.cursor;
         let mut input = String::new();
         loop {
             self.scroll();
-            self.set_status_message(format!("{}{}", prompt, input));
+            self.set_status_message(format!("{}{}", prompt, input), Duration::MAX);
             self.refresh();
             let c = self.read_key();
             if c.code == KeyCode::Esc {
-                self.set_status_message(String::new());
+                self.clear_status_message();
                 self.cursor = cursor;
                 return None;
             } else if c.code == KeyCode::Enter {
                 if !input.is_empty() {
-                    self.set_status_message(String::new());
+                    self.clear_status_message();
                     return Some(input);
                 }
             } else if c.code == KeyCode::Backspace {
