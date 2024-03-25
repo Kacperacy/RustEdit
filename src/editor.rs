@@ -5,7 +5,7 @@ use std::{
 };
 
 use crossterm::{
-    event::{read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
+    event::{poll, read, Event::Key, KeyCode, KeyEvent, KeyModifiers},
     terminal::{disable_raw_mode, enable_raw_mode, DisableLineWrap, EnableLineWrap},
 };
 
@@ -150,6 +150,12 @@ impl Editor {
     }
 
     fn process_keypress(&mut self) -> bool {
+        if let Ok(event) = poll(Duration::from_millis(100)) {
+            if !event {
+                return true;
+            }
+        }
+
         let c = self.read_key();
 
         if KeyModifiers::CONTROL == c.modifiers {
