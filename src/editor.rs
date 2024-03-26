@@ -346,9 +346,7 @@ impl Editor {
     }
 
     fn find(&mut self) {
-        if let Some(query) = self.prompt("Search: ", Some(Self::find_callback)) {
-            self.find_callback(&query, 0);
-        }
+        self.prompt("Search: ", Some(Self::find_callback));
     }
 
     fn prompt(
@@ -372,6 +370,7 @@ impl Editor {
             } else if c.code == KeyCode::Enter {
                 if !input.is_empty() {
                     self.clear_status_message();
+                    self.find_callback(&input, 0);
                     return Some(input);
                 }
             } else if c.code == KeyCode::Backspace {
