@@ -120,12 +120,17 @@ impl Screen {
             rows.len(),
             if dirty { "(modified)" } else { "" }
         );
+        let percentages = format!(
+            "{}%",
+            ((cursor_y + 1) as f64 / rows.len() as f64 * 100.0).round()
+        );
 
         status.truncate(self.width);
         let len = status.len();
-        for _ in len..self.width {
+        for _ in len..self.width - percentages.len() {
             status.push(' ');
         }
+        status.push_str(percentages.as_str());
         self.queue(status.reverse().to_string().as_str());
         self.queue("\r\n");
     }
