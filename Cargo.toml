@@ -1,8 +1,0 @@
-[package]
-name = "rust-edit"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies.iced]
-git = "https://github.com/iced-rs/iced.git"
-rev = "cdb18e610a72b4a025d7e1890140393adee5b087"
