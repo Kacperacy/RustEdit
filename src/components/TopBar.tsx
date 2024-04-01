@@ -1,18 +1,9 @@
-import { useState } from "react";
+import { useContext } from "react";
 import FileTab from "./files/FileTab";
-
-interface File {
-  name: string;
-  filePath: string;
-  active: boolean;
-}
+import FilesContext from "../FilesContext";
 
 function TopBar() {
-  const [files, setFiles] = useState<File[]>([
-    { name: "file1", filePath: "file1", active: true },
-    { name: "file2", filePath: "file2", active: false },
-    { name: "file3", filePath: "file3", active: false },
-  ]);
+  const [files, setFiles] = useContext(FilesContext);
 
   function closeFile(event: React.MouseEvent, filePath: string) {
     event.stopPropagation();
