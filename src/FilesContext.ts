@@ -1,20 +1,12 @@
-import React, { createContext, useState, useContext } from "react";
+import { createContext } from "react";
 import OpenedFile from "./types/OpenedFile";
 
-const FilesContext = createContext<OpenedFile[]>([]);
+const FilesContext = createContext<{
+  files: OpenedFile[];
+  setFiles: React.Dispatch<React.SetStateAction<OpenedFile[]>>;
+}>({
+  files: [],
+  setFiles: () => console.error("FilesContext not initialized"),
+});
 
-type FileProviderProps = {
-  children: React.ReactNode;
-};
-
-export const FileProvider = ({ children: FileProviderProps }) => {
-  const [files, setFiles] = useState<OpenedFile[]>([]);
-  return (
-    <FilesContext.Provider value={[files, setFiles]}>
-      {children}
-    </FilesContext.Provider>
-  );
-};
-
-// Custom hook to use the context
-export const useFilesContext = () => useContext(FilesContext);
+export default FilesContext;

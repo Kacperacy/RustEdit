@@ -3,7 +3,7 @@ import FileTab from "./files/FileTab";
 import FilesContext from "../FilesContext";
 
 function TopBar() {
-  const [files, setFiles] = useContext(FilesContext);
+  const { files, setFiles } = useContext(FilesContext);
 
   function closeFile(event: React.MouseEvent, filePath: string) {
     event.stopPropagation();
