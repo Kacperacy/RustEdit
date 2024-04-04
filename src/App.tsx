@@ -20,6 +20,31 @@ function App() {
       filePath: "script.js",
       active: false,
     },
+    {
+      name: "README.md",
+      filePath: "README.md",
+      active: false,
+    },
+    {
+      name: "package.json",
+      filePath: "package.json",
+      active: false,
+    },
+    {
+      name: "tsconfig.json",
+      filePath: "tsconfig.json",
+      active: false,
+    },
+    {
+      name: "webpack.config.js",
+      filePath: "webpack.config.js",
+      active: false,
+    },
+    {
+      name: "babel.config.json",
+      filePath: "babel.config.json",
+      active: false,
+    },
   ]);
 
   return (
