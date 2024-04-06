@@ -28,7 +28,7 @@ function TopBar() {
     <div className="flex flex-row bg-slate-700 overflow-x-auto overflow-y-hidden scrollbar-thin">
       {files.map((file) => (
         <FileTab
-          key={file.filePath}
+          key={"file-tab-" + file.filePath}
           name={file.name}
           filePath={file.filePath}
           isActive={file.active}
