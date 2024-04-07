@@ -27,4 +27,14 @@
     .scrollbar-thin *::-moz-scrollbar-thumb {
         background: #888;
     }
+
+    /* CodeEditor.css */
+
+    .code-editor {
+        @apply flex h-screen items-center justify-center;
+    }
+
+    .code-editor-textarea {
+        @apply w-full h-full bg-gray-100 p-4 text-base font-mono border border-gray-300 resize-none;
+    }
 }

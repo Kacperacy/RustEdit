@@ -2,6 +2,7 @@ import { useState } from "react";
 import FilesContext from "./FilesContext";
 import FileTab from "./components/TopBar";
 import OpenedFile from "./types/OpenedFile";
+import Editor from "./components/Editor";
 
 function App() {
   const [files, setFiles] = useState<OpenedFile[]>([
@@ -51,6 +52,7 @@ function App() {
     <FilesContext.Provider value={{ files, setFiles }}>
       <div className="w-screen h-screen bg-slate-600">
         <FileTab />
+        <Editor />
       </div>
     </FilesContext.Provider>
   );
