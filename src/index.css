@@ -28,13 +28,34 @@
         background: #888;
     }
 
-    /* CodeEditor.css */
+    textarea {
+        border: none;
+        overflow: auto;
+        outline: none;
 
-    .code-editor {
-        @apply flex h-screen items-center justify-center;
+        -webkit-box-shadow: none;
+        -moz-box-shadow: none;
+        box-shadow: none;
+
+        resize: none;
+        /*remove the resize handle on the bottom right*/
     }
 
+    .code-editor {
+        @apply flex h-screen;
+    }
+
+    .line-numbers {
+        @apply flex flex-col items-end justify-start w-16 h-full p-2 text-gray-500 select-none;
+    }
+
+    .line-number {
+        @apply w-8 text-right;
+    }
+
+    .line-number.selected {}
+
     .code-editor-textarea {
-        @apply w-full h-full bg-gray-100 p-4 text-base font-mono border border-gray-300 resize-none;
+        @apply flex-1 font-mono text-base p-2 border bg-slate-700 border-slate-800 resize-none;
     }
 }
