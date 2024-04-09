@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    * {
+        margin: 0;
+        padding: 0;
+    }
+}
+
 @layer utilities {
 
     .scrollbar-thin::-webkit-scrollbar {
@@ -42,7 +49,7 @@
     }
 
     .code-editor {
-        @apply flex h-screen;
+        @apply flex-1;
     }
 
     .line-numbers {
@@ -56,6 +63,6 @@
     .line-number.selected {}
 
     .code-editor-textarea {
-        @apply flex-1 font-mono text-base p-2 border bg-slate-700 border-slate-800 resize-none;
+        @apply h-full w-full font-mono text-base p-2 border bg-slate-700 border-slate-800 resize-none;
     }
 }
