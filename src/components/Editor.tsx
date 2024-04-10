@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, ChangeEvent } from "react";
 
 const CodeEditor: React.FC = () => {
   const [code, setCode] = useState<string>("// Start coding here...");

@@ -49,20 +49,10 @@
     }
 
     .code-editor {
-        @apply flex-1;
+        @apply flex-1 m-0 p-0;
     }
-
-    .line-numbers {
-        @apply flex flex-col items-end justify-start w-16 h-full p-2 text-gray-500 select-none;
-    }
-
-    .line-number {
-        @apply w-8 text-right;
-    }
-
-    .line-number.selected {}
 
     .code-editor-textarea {
-        @apply h-full w-full font-mono text-base p-2 border bg-slate-700 border-slate-800 resize-none;
+        @apply h-full w-full font-mono text-base bg-slate-700 resize-none m-0 p-2;
     }
 }

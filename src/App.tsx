@@ -50,7 +50,7 @@ function App() {
 
   return (
     <FilesContext.Provider value={{ files, setFiles }}>
-      <div className="w-screen h-screen flex flex-col bg-slate-600 overflow-auto">
+      <div className="w-screen h-screen flex flex-col bg-slate-600 overflow-clip">
         <FileTab />
         <Editor />
       </div>
