@@ -53,6 +53,6 @@
     }
 
     .code-editor-textarea {
-        @apply h-full w-full font-mono text-base bg-slate-700 resize-none m-0 p-2;
+        @apply h-full w-full font-mono text-base bg-slate-600 resize-none m-0 p-2;
     }
 }
