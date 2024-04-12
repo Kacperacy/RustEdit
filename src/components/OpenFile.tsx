@@ -7,7 +7,6 @@ const OpenFile: React.FC = () => {
   const handleFileOpen = () => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".txt"; // Specify the file types you want to allow
     input.onchange = (event) => {
       if (!event.target) return;
       const fileInput = event.target as HTMLInputElement;
