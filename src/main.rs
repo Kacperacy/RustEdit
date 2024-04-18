@@ -7,9 +7,16 @@ use ratatui::{
     widgets::{block::*, *},
 };
 
+use color_eyre::{
+    eyre::{bail, WrapErr},
+    Result,
+};
+
+mod errors;
 mod tui;
 
 fn main() -> io::Result<()> {
+    errors::install_hooks()?;
     let mut terminal = tui::init()?;
     let app_result = App::default().run(&mut terminal);
     tui::restore()?;
