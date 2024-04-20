@@ -10,6 +10,7 @@ use color_eyre::{
     Result,
 };
 
+mod app;
 mod errors;
 mod tui;
 
