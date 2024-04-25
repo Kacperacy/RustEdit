@@ -1,17 +1,21 @@
-use app::{CurrentScreen, CurrentlyEditing};
-use color_eyre::eyre::Ok;
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, KeyCode, KeyEventKind};
-use crossterm::execute;
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+use std::{error::Error, io};
+
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::backend::CrosstermBackend;
-use ratatui::Terminal;
-use std::error::Error;
-use std::io;
+use ratatui::{
+    backend::{Backend, CrosstermBackend},
+    Terminal,
+};
 
 mod app;
-use crate::app::App;
+mod ui;
+use crate::{
+    app::{App, CurrentScreen, CurrentlyEditing},
+    ui::ui,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
