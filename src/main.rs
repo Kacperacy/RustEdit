@@ -1,130 +1,60 @@
-use std::{error::Error, io};
+use ratatui::{backend::CrosstermBackend, Terminal};
 
-use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
-use ratatui::{
-    backend::{Backend, CrosstermBackend},
-    Terminal,
-};
+mod tui;
 
-mod app;
-mod ui;
-use crate::{
-    app::{App, CurrentScreen, CurrentlyEditing},
-    ui::ui,
-};
+pub enum Event {
+    Quit,
+    Error,
+    Tick,
+    Render,
+    Key(KeyEvent),
+}
 
-fn main() -> Result<(), Box<dyn Error>> {
-    enable_raw_mode()?;
-    let mut stderr = io::stderr();
-    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
-
-    let backend = CrosstermBackend::new(stderr);
-    let mut terminal = Terminal::new(backend)?;
-
-    let mut app = App::new();
-    let res = run_app(&mut terminal, &mut app);
-
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
-
-    if let Ok(do_print) = res {
-        if do_print {
-            app.print_json()?;
+fn update(app: &mut App, event: Event) -> Result<()> {
+    if let Event::Key(key) = event {
+        match key.code {
+            Char('j') => app.counter += 1,
+            Char('k') => app.counter -= 1,
+            Char('q') => app.should_quit = true,
+            _ => {}
         }
-    } else if let Err(err) = res {
-        println!("{err:?}");
+    }
+    Ok(())
+}
+
+async fn run() => Result<()> {
+    let mut events = tui::EventHandler::new();
+
+    let mut t = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
+
+    let mut app = App { counter: 0, should_quit: false};
+
+    loop {
+        let event = events.next().await?;
+
+        update(&mut app, event)?;
+
+        t.draw(|f| {
+            ui(f, &app);
+        })?;
+
+        if app.should_quit {
+            break;
+        }
     }
 
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
-    loop {
-        terminal.draw(|f| ui(f, app))?;
+#[tokio::main]
+async fn main() -> Result<()> {
+    startup()?;
 
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
-                continue;
-            }
+    let result = run();
 
-            match app.current_screen {
-                CurrentScreen::Main => match key.code {
-                    KeyCode::Char('e') => {
-                        app.current_screen = CurrentScreen::Editing;
-                        app.currently_editing = Some(CurrentlyEditing::Key);
-                    }
-                    KeyCode::Char('q') => {
-                        app.current_screen = CurrentScreen::Exiting;
-                    }
-                    _ => {}
-                },
-                CurrentScreen::Exiting => match key.code {
-                    KeyCode::Char('y') => {
-                        return Ok(true);
-                    }
-                    KeyCode::Char('n') | KeyCode::Char('q') => {
-                        return Ok(false);
-                    }
-                    _ => {}
-                },
-                CurrentScreen::Editing if key.kind == KeyEventKind::Press => match key.code {
-                    KeyCode::Enter => {
-                        if let Some(editing) = &app.currently_editing {
-                            match editing {
-                                CurrentlyEditing::Key => {
-                                    app.currently_editing = Some(CurrentlyEditing::Value);
-                                }
-                                CurrentlyEditing::Value => {
-                                    app.save_key_value();
-                                    app.current_screen = CurrentScreen::Main;
-                                }
-                            }
-                        }
-                    }
-                    KeyCode::Backspace => {
-                        if let Some(editing) = &app.currently_editing {
-                            match editing {
-                                CurrentlyEditing::Key => {
-                                    app.key_input.pop();
-                                }
-                                CurrentlyEditing::Value => {
-                                    app.value_input.pop();
-                                }
-                            }
-                        }
-                    }
-                    KeyCode::Esc => {
-                        app.current_screen = CurrentScreen::Main;
-                        app.currently_editing = None;
-                    }
-                    KeyCode::Tab => {
-                        app.toggle_edititng();
-                    }
-                    KeyCode::Char(value) => {
-                        if let Some(editing) = &app.currently_editing {
-                            match editing {
-                                CurrentlyEditing::Key => {
-                                    app.key_input.push(value);
-                                }
-                                CurrentlyEditing::Value => {
-                                    app.value_input.push(value);
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
-        }
-    }
+    shutdown()?;
+
+    result?;
+
+    Ok(())
 }
