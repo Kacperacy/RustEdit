@@ -11,13 +11,11 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 app.quit();
             }
         }
-        KeyCode::Right => {
-            app.increment_counter();
+        _ => {
+            if let KeyCode::Char(c) = key_event.code {
+                app.append_str(c)
+            }
         }
-        KeyCode::Left => {
-            app.decrement_counter();
-        }
-        _ => {}
     }
     Ok(())
 }
