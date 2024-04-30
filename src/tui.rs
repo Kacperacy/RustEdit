@@ -35,7 +35,9 @@ impl<B: Backend> Tui<B> {
     }
 
     pub fn draw(&mut self, app: &mut App) -> AppResult<()> {
+        self.terminal.hide_cursor()?;
         self.terminal.draw(|frame| ui::render(app, frame))?;
+        self.terminal.show_cursor()?;
         Ok(())
     }
 

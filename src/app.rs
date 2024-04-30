@@ -28,7 +28,11 @@ impl App {
         self.running = false;
     }
 
-    pub fn append_str(&mut self, text: char) {
-        self.content.push(text)
+    pub fn append_char(&mut self, c: char) {
+        self.content.push(c);
+    }
+
+    pub fn pop_char(&mut self) {
+        self.content.pop();
     }
 }
