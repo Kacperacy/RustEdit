@@ -9,21 +9,14 @@ use crate::app::App;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
     frame.render_widget(
-        Paragraph::new(format!(
-            "This is a tui template.\n\
-                Press `Esc`, `Ctrl-C` or `q` to stop running.\n\
-                Press left and right to increment and decrement the counter respectively.\n\
-                Content:\n {}",
-            app.content
-        ))
-        .block(
-            Block::bordered()
-                .title("Template")
-                .title_alignment(Alignment::Center)
-                .border_type(BorderType::Rounded),
-        )
-        .style(Style::default().fg(Color::Cyan).bg(Color::Black))
-        .centered(),
+        Paragraph::new(format!("{}", app.content))
+            .block(
+                Block::bordered()
+                    .title("Template")
+                    .title_alignment(Alignment::Center)
+                    .border_type(BorderType::Rounded),
+            )
+            .style(Style::default().fg(Color::Cyan).bg(Color::Black)),
         frame.size(),
     )
 }
