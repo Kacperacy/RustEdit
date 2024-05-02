@@ -12,7 +12,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            content: "".into(),
+            content: String::new(),
         }
     }
 }
