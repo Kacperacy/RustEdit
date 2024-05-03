@@ -12,7 +12,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         Paragraph::new(format!("{}", app.content))
             .block(
                 Block::bordered()
-                    .title("Template")
+                    .title("RustEdit")
                     .title_alignment(Alignment::Center)
                     .border_type(BorderType::Rounded),
             )
