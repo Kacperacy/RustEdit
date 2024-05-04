@@ -16,7 +16,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
                     .title_alignment(Alignment::Center)
                     .border_type(BorderType::Rounded),
             )
-            .style(Style::default().fg(Color::Cyan).bg(Color::Black)),
+            .style(Style::default().fg(Color::LightBlue).bg(Color::Black)),
         frame.size(),
     )
 }
