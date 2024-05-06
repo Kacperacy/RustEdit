@@ -18,5 +18,6 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             )
             .style(Style::default().fg(Color::LightBlue).bg(Color::Black)),
         frame.size(),
-    )
+    );
+    frame.set_cursor(app.cursor_position.x + 1, app.cursor_position.y + 1);
 }
