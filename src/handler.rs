@@ -14,6 +14,12 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
         KeyCode::Backspace => {
             app.pop_char();
         }
+        KeyCode::Left => {
+            app.move_cursor(-1);
+        }
+        KeyCode::Right => {
+            app.move_cursor(1);
+        }
         _ => {
             if let KeyCode::Char(c) = key_event.code {
                 app.append_char(c)

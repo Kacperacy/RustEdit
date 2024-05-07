@@ -49,4 +49,14 @@ impl App {
             self.cursor_position.x = previous_char;
         }
     }
+
+    pub fn move_cursor(&mut self, direction: i8) {
+        if direction < 0 {
+            if let Some(previous_char) = self.cursor_position.x.checked_sub(1) {
+                self.cursor_position.x = previous_char;
+            }
+        } else {
+            self.cursor_position.x += 1;
+        }
+    }
 }
