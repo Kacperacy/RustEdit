@@ -1,4 +1,4 @@
-use crate::app::{App, AppResult};
+use crate::app::{App, AppResult, Direction};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
@@ -9,20 +9,26 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
             }
         }
         KeyCode::Enter => {
-            app.append_char('\n');
+            app.add_new_line();
         }
         KeyCode::Backspace => {
             app.pop_char();
         }
         KeyCode::Left => {
-            app.move_cursor(-1);
+            app.move_cursor(Direction { x: -1, y: 0 });
         }
         KeyCode::Right => {
-            app.move_cursor(1);
+            app.move_cursor(Direction { x: 1, y: 0 });
+        }
+        KeyCode::Up => {
+            app.move_cursor(Direction { x: 0, y: 1 });
+        }
+        KeyCode::Down => {
+            app.move_cursor(Direction { x: 0, y: -1 });
         }
         _ => {
             if let KeyCode::Char(c) = key_event.code {
-                app.append_char(c)
+                app.insert_char(c)
             }
         }
     }
