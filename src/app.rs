@@ -75,12 +75,13 @@ impl App {
                 }
             }
         }
+
         if direction.y > 0 && self.cursor_position.y > 0 {
             self.cursor_position.y -= 1;
             if self.cursor_position.x > self.content[self.cursor_position.y].len() {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
             }
-        } else if direction.y < 0 && self.cursor_position.y < self.content.len() - 1 {
+        } else if direction.y < 0 && self.cursor_position.y < self.content.len().saturating_sub(1) {
             self.cursor_position.y += 1;
             if self.cursor_position.x > self.content[self.cursor_position.y].len() {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
