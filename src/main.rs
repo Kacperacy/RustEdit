@@ -23,8 +23,8 @@ async fn main() -> AppResult<()> {
                 handle_key_events(key_event, &mut app)?;
                 tui.draw(&mut app)?;
             }
-            Event::Mouse(_) => {}
-            Event::Resize(_, _) => {}
+            Event::Mouse(_) => tui.draw(&mut app)?,
+            Event::Resize(_, _) => tui.draw(&mut app)?,
         }
     }
 
