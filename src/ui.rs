@@ -11,7 +11,11 @@ use crate::app::App;
 pub fn render(app: &mut App, frame: &mut Frame) {
     let content_lines: Vec<Line> = app.content.iter().map(|s| s.as_str().into()).collect();
 
-    let status_bar = Line::from(format!(
+    let filename_status = Line::from(format!("Filename: TEST",))
+        .left_aligned()
+        .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
+
+    let cursor_position_status = Line::from(format!(
         " {:>2}:{:<2} ",
         app.cursor_position.y + 1,
         app.cursor_position.x + 1
@@ -27,6 +31,11 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             Constraint::Length(1),
         ])
         .split(frame.size());
+
+    let status_bar_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(layout[2]);
 
     frame.render_widget(
         Block::new()
@@ -52,12 +61,21 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     );
 
     frame.render_widget(
-        Paragraph::new(status_bar).style(
+        Paragraph::new(filename_status).style(
             Style::default()
                 .fg(Color::Rgb(16, 16, 16))
                 .bg(Color::Rgb(92, 92, 128)),
         ),
-        layout[2],
+        status_bar_layout[0],
+    );
+
+    frame.render_widget(
+        Paragraph::new(cursor_position_status).style(
+            Style::default()
+                .fg(Color::Rgb(16, 16, 16))
+                .bg(Color::Rgb(92, 92, 128)),
+        ),
+        status_bar_layout[1],
     );
 
     frame.set_cursor(
