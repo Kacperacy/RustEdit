@@ -11,7 +11,7 @@ use crate::app::App;
 pub fn render(app: &mut App, frame: &mut Frame) {
     let content_lines: Vec<Line> = app.content.iter().map(|s| s.as_str().into()).collect();
 
-    let filename_status = Line::from(format!("Filename: TEST",))
+    let filename_status = Line::from(format!("Filename: {}", app.opened_filename))
         .left_aligned()
         .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
 

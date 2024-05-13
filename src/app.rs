@@ -20,6 +20,7 @@ pub struct App {
     pub content: Vec<String>,
     pub cursor_position: Position,
     pub cursor_offset: Position,
+    pub opened_filename: String,
 }
 
 impl Default for App {
@@ -29,6 +30,7 @@ impl Default for App {
             content: Vec::new(),
             cursor_position: Position { x: 0, y: 0 },
             cursor_offset: Position { x: 0, y: 0 },
+            opened_filename: String::new(),
         }
     }
 }
