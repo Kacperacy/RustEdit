@@ -54,39 +54,24 @@ impl App {
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
-
         self.content[self.cursor_position.y + self.cursor_offset.y]
             .insert(self.cursor_position.x + self.cursor_offset.x, c);
         self.move_cursor(Direction { x: 1, y: 0 });
     }
 
     pub fn add_new_line(&mut self) {
-        while self.cursor_position.y >= self.content.len() {
-            self.content.push(String::new());
-        }
-
         self.content.insert(
             self.cursor_position.y + self.cursor_offset.y + 1,
             String::new(),
         );
-        self.move_cursor(Direction { x: 0, y: -1 });
+        self.move_cursor(Direction { x: 0, y: -1 })
     }
 
     pub fn pop_char(&mut self) {
-        if self.content.len() == 0 {
-            return;
-        }
+        self.content[self.cursor_position.y].pop();
 
-        if self.content[self.cursor_position.y + self.cursor_offset.y].len() == 0 {
-            self.content
-                .remove(self.cursor_position.y + self.cursor_offset.y);
-
-            self.move_cursor(Direction { x: 0, y: 1 });
-        } else {
-            self.content[self.cursor_position.y + self.cursor_offset.y]
-                .remove(self.cursor_position.x + self.cursor_offset.x - 1);
-
-            self.move_cursor(Direction { x: -1, y: 0 });
+        if self.cursor_position.x > 0 {
+            self.cursor_position.x -= 1;
         }
     }
 
@@ -118,7 +103,6 @@ impl App {
 
             if self.cursor_position.x > self.content[self.cursor_position.y].len() {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
-                self.cursor_offset.x = 0;
             }
         } else if direction.y < 0
             && self.cursor_position.y + self.cursor_offset.y < self.content.len().saturating_sub(1)
@@ -131,7 +115,6 @@ impl App {
 
             if self.cursor_position.x > self.content[self.cursor_position.y].len() {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
-                self.cursor_offset.x = 0;
             }
         }
     }

@@ -17,8 +17,8 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     let cursor_position_status = Line::from(format!(
         " {:>2}:{:<2} ",
-        app.cursor_position.y + 1,
-        app.cursor_position.x + 1,
+        app.cursor_position.y + app.cursor_offset.y + 1,
+        app.cursor_position.x + app.cursor_offset.x + 1,
     ))
     .right_aligned()
     .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
