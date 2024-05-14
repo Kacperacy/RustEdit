@@ -14,6 +14,7 @@ async fn main() -> AppResult<()> {
     let events = EventHandler::new(250);
     let mut tui = Tui::new(terminal, events);
     tui.init()?;
+    app.window_size = tui.get_terminal_size()?;
     tui.draw(&mut app)?;
 
     while app.running {
@@ -24,7 +25,10 @@ async fn main() -> AppResult<()> {
                 tui.draw(&mut app)?;
             }
             Event::Mouse(_) => tui.draw(&mut app)?,
-            Event::Resize(_, _) => tui.draw(&mut app)?,
+            Event::Resize(_, _) => {
+                app.window_size = tui.get_terminal_size()?;
+                tui.draw(&mut app)?;
+            }
         }
     }
 

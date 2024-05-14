@@ -1,5 +1,7 @@
 use std::error;
 
+use ratatui::layout::Rect;
+
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 #[derive(Debug)]
@@ -21,6 +23,7 @@ pub struct App {
     pub cursor_position: Position,
     pub cursor_offset: Position,
     pub opened_filename: String,
+    pub window_size: Rect,
 }
 
 impl Default for App {
@@ -31,6 +34,7 @@ impl Default for App {
             cursor_position: Position { x: 0, y: 0 },
             cursor_offset: Position { x: 0, y: 0 },
             opened_filename: String::new(),
+            window_size: Rect::new(0, 0, 0, 0),
         }
     }
 }
@@ -50,11 +54,14 @@ impl App {
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
-        self.content[self.cursor_position.y].insert(self.cursor_position.x, c);
+        self.content[self.cursor_position.y + self.cursor_offset.y]
+            .insert(self.cursor_position.x + self.cursor_offset.x, c);
         self.cursor_position.x += 1;
     }
 
     pub fn add_new_line(&mut self) {
+        self.content
+            .insert(self.cursor_position.y + self.cursor_offset.y, String::new());
         self.cursor_position.y += 1;
         self.cursor_position.x = 0;
     }
@@ -68,23 +75,43 @@ impl App {
     }
 
     pub fn move_cursor(&mut self, direction: Direction) {
-        if direction.x < 0 && self.cursor_position.x > 0 {
-            self.cursor_position.x -= 1;
+        if direction.x < 0 && self.cursor_position.x + self.cursor_offset.x > 0 {
+            if self.cursor_position.x == 0 {
+                self.cursor_offset.x -= 1;
+            } else {
+                self.cursor_position.x -= 1;
+            }
         } else if direction.x > 0 {
             if let Some(line) = self.content.get(self.cursor_position.y) {
-                if line.len() > self.cursor_position.x {
-                    self.cursor_position.x += 1;
+                if line.len() > self.cursor_position.x + self.cursor_offset.x {
+                    if self.window_size.width.saturating_sub(1) > self.cursor_position.x as u16 {
+                        self.cursor_position.x += 1;
+                    } else {
+                        self.cursor_offset.x += 1;
+                    }
                 }
             }
         }
 
-        if direction.y > 0 && self.cursor_position.y > 0 {
-            self.cursor_position.y -= 1;
+        if direction.y > 0 && self.cursor_position.y + self.cursor_offset.y > 0 {
+            if self.cursor_position.y == 0 {
+                self.cursor_offset.y -= 1;
+            } else {
+                self.cursor_position.y -= 1;
+            }
+
             if self.cursor_position.x > self.content[self.cursor_position.y].len() {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
             }
-        } else if direction.y < 0 && self.cursor_position.y < self.content.len().saturating_sub(1) {
-            self.cursor_position.y += 1;
+        } else if direction.y < 0
+            && self.cursor_position.y + self.cursor_offset.y < self.content.len().saturating_sub(1)
+        {
+            if self.window_size.height.saturating_sub(4) > self.cursor_position.y as u16 {
+                self.cursor_position.y += 1;
+            } else {
+                self.cursor_offset.y += 1;
+            }
+
             if self.cursor_position.x > self.content[self.cursor_position.y].len() {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
             }

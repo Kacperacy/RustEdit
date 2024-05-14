@@ -18,7 +18,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let cursor_position_status = Line::from(format!(
         " {:>2}:{:<2} ",
         app.cursor_position.y + 1,
-        app.cursor_position.x + 1
+        app.cursor_position.x + 1,
     ))
     .right_aligned()
     .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
@@ -28,6 +28,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         .constraints([
             Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(1),
             Constraint::Length(1),
         ])
         .split(frame.size());
@@ -52,11 +53,13 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     );
 
     frame.render_widget(
-        Paragraph::new(content_lines).style(
-            Style::default()
-                .fg(Color::Rgb(128, 192, 255))
-                .bg(Color::Rgb(32, 32, 64)),
-        ),
+        Paragraph::new(content_lines)
+            .style(
+                Style::default()
+                    .fg(Color::Rgb(128, 192, 255))
+                    .bg(Color::Rgb(32, 32, 64)),
+            )
+            .scroll((app.cursor_offset.y as u16, app.cursor_offset.x as u16)),
         layout[1],
     );
 
@@ -77,6 +80,8 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         ),
         status_bar_layout[1],
     );
+
+    frame.render_widget(Line::from("Press Ctrl + C to quit").centered(), layout[3]);
 
     frame.set_cursor(
         app.cursor_position.x as u16,

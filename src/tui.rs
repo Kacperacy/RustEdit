@@ -4,8 +4,9 @@ use crate::ui;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::backend::Backend;
+use ratatui::layout::Rect;
 use ratatui::Terminal;
-use std::io;
+use std::io::{self, Error};
 use std::panic;
 
 #[derive(Debug)]
@@ -51,5 +52,9 @@ impl<B: Backend> Tui<B> {
         Self::reset()?;
         self.terminal.show_cursor()?;
         Ok(())
+    }
+
+    pub fn get_terminal_size(&self) -> Result<Rect, Error> {
+        self.terminal.size()
     }
 }
