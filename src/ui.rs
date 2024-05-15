@@ -9,9 +9,32 @@ use ratatui::{
 use crate::app::App;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
-    let content_lines: Vec<Line> = app.content.iter().map(|s| s.as_str().into()).collect();
+    let content_width = (frame.size().width - 5) as usize;
+    let numbers_width = std::cmp::max((app.content.len() as f64).log10().ceil() as usize, 4);
+
+    let content_lines: Vec<Line> = app
+        .content
+        .iter()
+        .enumerate()
+        .map(|(i, s)| {
+            if i == app.cursor_position.y + app.cursor_offset.y {
+                Line::from(format!("{:<content_width$}", s))
+                    .style(Style::default().bg(Color::Rgb(64, 64, 96)))
+            } else {
+                Line::from(format!("{}", s))
+            }
+        })
+        .collect();
+
     let line_numbers: Vec<Line> = (1..=app.content.len())
-        .map(|i| Line::from(format!("{:>4} ", i)))
+        .map(|i| {
+            if i - 1 == app.cursor_position.y + app.cursor_offset.y {
+                Line::from(format!("{:>numbers_width$} ", i))
+                    .style(Style::default().fg(Color::Rgb(96, 128, 196)))
+            } else {
+                Line::from(format!("{:>numbers_width$} ", i))
+            }
+        })
         .collect();
 
     let filename_status = Line::from(format!("Filename: {}", app.opened_filename))
@@ -103,7 +126,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     frame.render_widget(Line::from("Press Ctrl + C to quit").centered(), layout[3]);
 
     frame.set_cursor(
-        app.cursor_position.x as u16 + 5,
+        (app.cursor_position.x + 1 + numbers_width) as u16,
         app.cursor_position.y as u16 + 1,
     );
 }
