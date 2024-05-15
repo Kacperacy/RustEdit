@@ -30,7 +30,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            content: Vec::new(),
+            content: vec![String::new()],
             cursor_position: Position { x: 0, y: 0 },
             cursor_offset: Position { x: 0, y: 0 },
             opened_filename: String::new(),

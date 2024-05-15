@@ -10,6 +10,9 @@ use crate::app::App;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
     let content_lines: Vec<Line> = app.content.iter().map(|s| s.as_str().into()).collect();
+    let line_numbers: Vec<Line> = (1..=app.content.len())
+        .map(|i| Line::from(format!("{:>4} ", i)))
+        .collect();
 
     let filename_status = Line::from(format!("Filename: {}", app.opened_filename))
         .left_aligned()
@@ -33,6 +36,11 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         ])
         .split(frame.size());
 
+    let content_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Length(5), Constraint::Min(0)])
+        .split(layout[1]);
+
     let status_bar_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
@@ -53,6 +61,17 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     );
 
     frame.render_widget(
+        Paragraph::new(line_numbers)
+            .style(
+                Style::default()
+                    .fg(Color::Rgb(64, 96, 128))
+                    .bg(Color::Rgb(32, 32, 64)),
+            )
+            .scroll((app.cursor_offset.y as u16, app.cursor_offset.x as u16)),
+        content_layout[0],
+    );
+
+    frame.render_widget(
         Paragraph::new(content_lines)
             .style(
                 Style::default()
@@ -60,7 +79,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
                     .bg(Color::Rgb(32, 32, 64)),
             )
             .scroll((app.cursor_offset.y as u16, app.cursor_offset.x as u16)),
-        layout[1],
+        content_layout[1],
     );
 
     frame.render_widget(
@@ -84,7 +103,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     frame.render_widget(Line::from("Press Ctrl + C to quit").centered(), layout[3]);
 
     frame.set_cursor(
-        app.cursor_position.x as u16,
+        app.cursor_position.x as u16 + 5,
         app.cursor_position.y as u16 + 1,
     );
 }
