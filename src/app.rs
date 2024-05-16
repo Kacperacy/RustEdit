@@ -4,6 +4,8 @@ use ratatui::layout::Rect;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+const QUIT_TIMES: i8 = 2;
+
 #[derive(Debug)]
 pub struct Direction {
     pub x: i8,
@@ -24,6 +26,8 @@ pub struct App {
     pub cursor_offset: Position,
     pub opened_filename: String,
     pub window_size: Rect,
+    dirty: bool,
+    quit_times: i8,
 }
 
 impl Default for App {
@@ -35,6 +39,8 @@ impl Default for App {
             cursor_offset: Position { x: 0, y: 0 },
             opened_filename: String::new(),
             window_size: Rect::new(0, 0, 0, 0),
+            dirty: false,
+            quit_times: QUIT_TIMES,
         }
     }
 }
@@ -47,10 +53,25 @@ impl App {
     pub fn tick(&self) {}
 
     pub fn quit(&mut self) {
-        self.running = false;
+        if !self.dirty {
+            self.running = false;
+            return;
+        }
+
+        self.quit_times -= 1;
+        if self.quit_times <= 0 {
+            self.running = false;
+        }
+    }
+
+    fn set_dirty(&mut self) {
+        self.dirty = true;
+        self.quit_times = QUIT_TIMES;
     }
 
     pub fn insert_char(&mut self, c: char) {
+        self.set_dirty();
+
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
@@ -61,6 +82,8 @@ impl App {
     }
 
     pub fn add_new_line(&mut self) {
+        self.set_dirty();
+
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
@@ -73,6 +96,8 @@ impl App {
     }
 
     pub fn pop_char(&mut self) {
+        self.set_dirty();
+
         if self.content.len() == 0 {
             return;
         }
@@ -91,6 +116,8 @@ impl App {
     }
 
     pub fn move_cursor(&mut self, direction: Direction) {
+        self.quit_times = QUIT_TIMES;
+
         if direction.x < 0 && self.cursor_position.x + self.cursor_offset.x > 0 {
             if self.cursor_position.x == 0 {
                 self.cursor_offset.x -= 1;
