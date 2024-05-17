@@ -6,6 +6,8 @@ use ratatui::{
     Frame,
 };
 
+const RELATIVE_LINES: bool = true;
+
 use crate::app::App;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
@@ -26,10 +28,27 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         })
         .collect();
 
-    let line_numbers: Vec<Line> = (1..=app.content.len())
-        .map(|i| {
-            if i - 1 == app.cursor_position.y + app.cursor_offset.y {
-                Line::from(format!("{:>numbers_width$} ", i))
+    let pos = app.cursor_position.y + app.cursor_offset.y + 1;
+    let numbers = if RELATIVE_LINES {
+        if app.content.len() == 1 {
+            vec![1]
+        } else {
+            (1..=pos - 1)
+                .rev()
+                .chain(std::iter::once(pos))
+                .chain(1..=app.content.len() - pos)
+                .collect::<Vec<_>>()
+        }
+    } else {
+        (1..=app.content.len()).collect::<Vec<_>>()
+    };
+
+    let line_numbers: Vec<Line> = numbers
+        .iter()
+        .enumerate()
+        .map(|(e, &i)| {
+            if e == app.cursor_position.y + app.cursor_offset.y {
+                Line::from(format!("{:<numbers_width$} ", i))
                     .style(Style::default().fg(Color::Rgb(96, 128, 196)))
             } else {
                 Line::from(format!("{:>numbers_width$} ", i))
