@@ -10,9 +10,11 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
         }
         _ => match key_event.code {
             KeyCode::Enter => {
+                app.set_dirty();
                 app.add_new_line();
             }
             KeyCode::Backspace => {
+                app.set_dirty();
                 app.pop_char();
             }
             KeyCode::Left => {
@@ -29,6 +31,7 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
             }
             _ => {
                 if let KeyCode::Char(c) = key_event.code {
+                    app.set_dirty();
                     app.insert_char(c)
                 }
             }

@@ -64,14 +64,16 @@ impl App {
         }
     }
 
-    fn set_dirty(&mut self) {
+    pub fn set_dirty(&mut self) {
         self.dirty = true;
+        self.reset_quit();
+    }
+
+    pub fn reset_quit(&mut self) {
         self.quit_times = QUIT_TIMES;
     }
 
     pub fn insert_char(&mut self, c: char) {
-        self.set_dirty();
-
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
@@ -82,8 +84,6 @@ impl App {
     }
 
     pub fn add_new_line(&mut self) {
-        self.set_dirty();
-
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
@@ -96,8 +96,6 @@ impl App {
     }
 
     pub fn pop_char(&mut self) {
-        self.set_dirty();
-
         if self.content.len() == 0 {
             return;
         }
@@ -116,7 +114,7 @@ impl App {
     }
 
     pub fn move_cursor(&mut self, direction: Direction) {
-        self.quit_times = QUIT_TIMES;
+        self.reset_quit();
 
         if direction.x < 0 && self.cursor_position.x + self.cursor_offset.x > 0 {
             if self.cursor_position.x == 0 {
