@@ -7,6 +7,9 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
             if key_event.code == KeyCode::Char('c') || key_event.code == KeyCode::Char('C') {
                 app.quit();
             }
+            if key_event.code == KeyCode::Char('s') || key_event.code == KeyCode::Char('S') {
+                app.save_to_file("text.txt".into());
+            }
         }
         _ => match key_event.code {
             KeyCode::Enter => {

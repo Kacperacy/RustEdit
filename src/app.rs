@@ -1,4 +1,4 @@
-use std::error;
+use std::{error, fs};
 
 use ratatui::layout::Rect;
 
@@ -71,6 +71,11 @@ impl App {
 
     pub fn reset_quit(&mut self) {
         self.quit_times = QUIT_TIMES;
+    }
+
+    pub fn save_to_file(&mut self, filename: String) {
+        self.dirty = false;
+        let _ = fs::write(filename, self.content.join("\n"));
     }
 
     pub fn insert_char(&mut self, c: char) {
