@@ -14,12 +14,14 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let content_width = (frame.size().width - 5) as usize;
     let numbers_width = std::cmp::max((app.content.len() as f64).log10().ceil() as usize, 4);
 
+    let pos = app.get_cursor_positon();
+
     let content_lines: Vec<Line> = app
         .content
         .iter()
         .enumerate()
         .map(|(i, s)| {
-            if i == app.cursor_position.y + app.cursor_offset.y {
+            if i == pos.y {
                 Line::from(format!("{:<content_width$}", s))
                     .style(Style::default().bg(Color::Rgb(64, 64, 96)))
             } else {
@@ -28,15 +30,14 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         })
         .collect();
 
-    let pos = app.cursor_position.y + app.cursor_offset.y + 1;
     let numbers = if RELATIVE_LINES {
         if app.content.len() == 1 {
             vec![1]
         } else {
-            (1..=pos - 1)
+            (1..=pos.y)
                 .rev()
-                .chain(std::iter::once(pos))
-                .chain(1..=app.content.len() - pos)
+                .chain(std::iter::once(pos.y))
+                .chain(1..=app.content.len() - pos.y - 1)
                 .collect::<Vec<_>>()
         }
     } else {
@@ -47,7 +48,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         .iter()
         .enumerate()
         .map(|(e, &i)| {
-            if e == app.cursor_position.y + app.cursor_offset.y {
+            if e == pos.y {
                 Line::from(format!("{:<numbers_width$} ", i))
                     .style(Style::default().fg(Color::Rgb(96, 128, 196)))
             } else {
@@ -60,13 +61,15 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         .left_aligned()
         .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
 
-    let cursor_position_status = Line::from(format!(
-        " {:>2}:{:<2} ",
-        app.cursor_position.y + app.cursor_offset.y + 1,
-        app.cursor_position.x + app.cursor_offset.x + 1,
-    ))
-    .right_aligned()
-    .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
+    let cursor_position_status = Line::from(format!(" {:>2}:{:<2} ", pos.y + 1, pos.x + 1,))
+        .right_aligned()
+        .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
+
+    let status_line: Line = if app.is_prompt {
+        Line::from(format!("{:<}", app.prompt))
+    } else {
+        Line::from("Press Ctrl + C to quit").centered()
+    };
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
@@ -142,10 +145,10 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         status_bar_layout[1],
     );
 
-    frame.render_widget(Line::from("Press Ctrl + C to quit").centered(), layout[3]);
+    frame.render_widget(status_line, layout[3]);
 
     frame.set_cursor(
-        (app.cursor_position.x + 1 + numbers_width) as u16,
+        (app.cursor_position.x + (if app.is_prompt { 1 } else { numbers_width + 1 })) as u16,
         app.cursor_position.y as u16 + 1,
     );
 }

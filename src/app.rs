@@ -12,7 +12,7 @@ pub struct Direction {
     pub y: i8,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
@@ -28,6 +28,9 @@ pub struct App {
     pub window_size: Rect,
     dirty: bool,
     quit_times: i8,
+    pub is_prompt: bool,
+    pub prompt: String,
+    prompt_cursor_position: Position,
 }
 
 impl Default for App {
@@ -41,6 +44,9 @@ impl Default for App {
             window_size: Rect::new(0, 0, 0, 0),
             dirty: false,
             quit_times: QUIT_TIMES,
+            is_prompt: false,
+            prompt: String::new(),
+            prompt_cursor_position: Position { x: 0, y: 0 },
         }
     }
 }
@@ -73,12 +79,58 @@ impl App {
         self.quit_times = QUIT_TIMES;
     }
 
-    pub fn save_to_file(&mut self, filename: String) {
+    pub fn get_cursor_positon(&self) -> Position {
+        let x = if self.is_prompt {
+            self.prompt_cursor_position.x
+        } else {
+            self.cursor_position.x
+        };
+
+        let y = if self.is_prompt {
+            self.prompt_cursor_position.y
+        } else {
+            self.cursor_position.y
+        };
+
+        Position {
+            x: x + self.cursor_offset.x,
+            y: y + self.cursor_offset.y,
+        }
+    }
+
+    pub fn enter_prompt(&mut self) {
+        self.is_prompt = true;
+        self.prompt_cursor_position = self.cursor_position;
+        self.cursor_position.y = self.window_size.height as usize;
+        self.cursor_position.x = 0;
+    }
+
+    pub fn exit_prompt(&mut self) {
+        if self.is_prompt {
+            self.is_prompt = false;
+            self.prompt = String::new();
+            self.cursor_position = self.prompt_cursor_position;
+            self.prompt_cursor_position = Position { x: 0, y: 0 };
+        }
+    }
+
+    pub fn save_to_file(&mut self) {
+        if self.opened_filename.is_empty() || self.is_prompt {
+            self.enter_prompt();
+            return;
+        }
+
         self.dirty = false;
-        let _ = fs::write(filename, self.content.join("\n"));
+        let _ = fs::write(&self.opened_filename, self.content.join("\n"));
     }
 
     pub fn insert_char(&mut self, c: char) {
+        if self.is_prompt {
+            self.prompt.insert(self.cursor_position.x, c);
+            self.move_cursor(Direction { x: 1, y: 0 });
+            return;
+        }
+
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
@@ -89,6 +141,13 @@ impl App {
     }
 
     pub fn add_new_line(&mut self) {
+        if self.is_prompt {
+            self.opened_filename = self.prompt.clone();
+            self.exit_prompt();
+            self.save_to_file();
+            return;
+        }
+
         while self.cursor_position.y >= self.content.len() {
             self.content.push(String::new());
         }
@@ -101,6 +160,14 @@ impl App {
     }
 
     pub fn pop_char(&mut self) {
+        if self.is_prompt {
+            if self.prompt.len() == 0 {
+                return;
+            }
+            self.prompt.pop();
+            return;
+        }
+
         if self.content.len() == 0 {
             return;
         }
@@ -120,6 +187,15 @@ impl App {
 
     pub fn move_cursor(&mut self, direction: Direction) {
         self.reset_quit();
+
+        if self.is_prompt {
+            if direction.x < 0 && self.cursor_position.x > 0 {
+                self.cursor_position.x -= 1;
+            } else if direction.x > 0 && self.prompt.len() > self.cursor_position.x {
+                self.cursor_position.x += 1;
+            }
+            return;
+        }
 
         if direction.x < 0 && self.cursor_position.x + self.cursor_offset.x > 0 {
             if self.cursor_position.x == 0 {

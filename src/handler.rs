@@ -8,10 +8,13 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 app.quit();
             }
             if key_event.code == KeyCode::Char('s') || key_event.code == KeyCode::Char('S') {
-                app.save_to_file("text.txt".into());
+                app.save_to_file();
             }
         }
         _ => match key_event.code {
+            KeyCode::Esc => {
+                app.exit_prompt();
+            }
             KeyCode::Enter => {
                 app.set_dirty();
                 app.add_new_line();
