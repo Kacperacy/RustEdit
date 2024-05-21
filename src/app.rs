@@ -1,4 +1,4 @@
-use std::{error, fs};
+use std::{cmp::min, error, fs};
 
 use ratatui::layout::Rect;
 
@@ -165,6 +165,7 @@ impl App {
                 return;
             }
             self.prompt.pop();
+            self.move_cursor(Direction { x: -1, y: 0 });
             return;
         }
 
@@ -172,14 +173,22 @@ impl App {
             return;
         }
 
-        if self.content[self.cursor_position.y + self.cursor_offset.y].len() == 0 {
-            self.content
-                .remove(self.cursor_position.y + self.cursor_offset.y);
+        let pos = self.get_cursor_positon();
+
+        if self.content[pos.y].len() == 0 {
+            self.content.remove(pos.y);
+
+            self.move_cursor(Direction { x: 0, y: 1 });
+        } else if self.cursor_position.x == 0 && self.cursor_position.y > 0 {
+            let lower_line = self.content.remove(pos.y);
+
+            self.cursor_position.x = self.content[pos.y - 1].len();
+
+            self.content[pos.y - 1].push_str(&lower_line);
 
             self.move_cursor(Direction { x: 0, y: 1 });
         } else {
-            self.content[self.cursor_position.y + self.cursor_offset.y]
-                .remove(self.cursor_position.x + self.cursor_offset.x - 1);
+            self.content[pos.y].remove(pos.x - 1);
 
             self.move_cursor(Direction { x: -1, y: 0 });
         }
@@ -197,25 +206,42 @@ impl App {
             return;
         }
 
-        if direction.x < 0 && self.cursor_position.x + self.cursor_offset.x > 0 {
-            if self.cursor_position.x == 0 {
-                self.cursor_offset.x -= 1;
-            } else {
-                self.cursor_position.x -= 1;
+        let pos = self.get_cursor_positon();
+
+        if direction.x < 0 {
+            if pos.x > 0 {
+                if self.cursor_position.x == 0 {
+                    self.cursor_offset.x -= 1;
+                } else {
+                    self.cursor_position.x -= 1;
+                }
+            } else if self.cursor_position.y > 0 {
+                self.cursor_position.y -= 1;
+                let len = self.content[self.cursor_position.y].len();
+                self.cursor_position.x = min(len, self.window_size.width.into());
+                self.cursor_offset.x = len - self.cursor_position.x;
             }
         } else if direction.x > 0 {
             if let Some(line) = self.content.get(self.cursor_position.y) {
-                if line.len() > self.cursor_position.x + self.cursor_offset.x {
+                if line.len() > pos.x {
                     if self.window_size.width.saturating_sub(1) > self.cursor_position.x as u16 {
                         self.cursor_position.x += 1;
                     } else {
                         self.cursor_offset.x += 1;
                     }
+                } else if line.len() == pos.x && pos.y < self.content.len() - 1 {
+                    self.cursor_offset.x = 0;
+                    self.cursor_position.x = 0;
+                    if self.cursor_position.y + 1 > self.window_size.height.into() {
+                        self.cursor_offset.y += 1;
+                    } else {
+                        self.cursor_position.y += 1;
+                    }
                 }
             }
         }
 
-        if direction.y > 0 && self.cursor_position.y + self.cursor_offset.y > 0 {
+        if direction.y > 0 && pos.y > 0 {
             if self.cursor_position.y == 0 {
                 self.cursor_offset.y -= 1;
             } else {
@@ -226,9 +252,7 @@ impl App {
                 self.cursor_position.x = self.content[self.cursor_position.y].len();
                 self.cursor_offset.x = 0;
             }
-        } else if direction.y < 0
-            && self.cursor_position.y + self.cursor_offset.y < self.content.len().saturating_sub(1)
-        {
+        } else if direction.y < 0 && pos.y < self.content.len().saturating_sub(1) {
             if self.window_size.height.saturating_sub(4) > self.cursor_position.y as u16 {
                 self.cursor_position.y += 1;
             } else {

@@ -37,7 +37,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             (1..=pos.y)
                 .rev()
                 .chain(std::iter::once(pos.y))
-                .chain(1..=app.content.len() - pos.y - 1)
+                .chain(1..=app.content.len().saturating_sub(pos.y + 1))
                 .collect::<Vec<_>>()
         }
     } else {
@@ -68,7 +68,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let status_line: Line = if app.is_prompt {
         Line::from(format!("{:<}", app.prompt))
     } else {
-        Line::from("Press Ctrl + C to quit").centered()
+        Line::from("Press Ctrl + C to quit, Ctrl + S to save.").centered()
     };
 
     let layout = Layout::default()
@@ -148,7 +148,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     frame.render_widget(status_line, layout[3]);
 
     frame.set_cursor(
-        (app.cursor_position.x + (if app.is_prompt { 1 } else { numbers_width + 1 })) as u16,
+        (app.cursor_position.x + (if app.is_prompt { 0 } else { numbers_width + 1 })) as u16,
         app.cursor_position.y as u16 + 1,
     );
 }
