@@ -152,10 +152,23 @@ impl App {
             self.content.push(String::new());
         }
 
-        self.content.insert(
-            self.cursor_position.y + self.cursor_offset.y + 1,
-            String::new(),
-        );
+        let current_line = &self.content[self.cursor_position.y];
+
+        if current_line.len() > 0 {
+            let new_line = self.content[self.cursor_position.y].split_off(self.cursor_position.x);
+
+            self.content.insert(
+                self.cursor_position.y + self.cursor_offset.y + 1,
+                String::from(new_line),
+            );
+        } else {
+            self.content.insert(
+                self.cursor_position.y + self.cursor_offset.y + 1,
+                String::new(),
+            );
+        }
+
+        self.cursor_position.x = 0;
         self.move_cursor(Direction { x: 0, y: -1 });
     }
 
@@ -187,7 +200,7 @@ impl App {
             self.content[pos.y - 1].push_str(&lower_line);
 
             self.move_cursor(Direction { x: 0, y: 1 });
-        } else {
+        } else if !(self.cursor_position.x == 0 && self.cursor_position.y == 0) {
             self.content[pos.y].remove(pos.x - 1);
 
             self.move_cursor(Direction { x: -1, y: 0 });
