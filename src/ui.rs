@@ -57,7 +57,13 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         })
         .collect();
 
-    let filename_status = Line::from(format!("Filename: {}", app.opened_filename))
+    let filename_content: String = if app.dirty {
+        format!("Filename: {} (modified)", app.opened_filename)
+    } else {
+        format!("Filename: {} ", app.opened_filename)
+    };
+
+    let filename_status = Line::from(filename_content)
         .left_aligned()
         .style(Style::default().bg(Color::Rgb(128, 192, 255)).bold());
 
