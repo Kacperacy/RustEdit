@@ -40,7 +40,7 @@ impl Default for App {
             content: vec![String::new()],
             cursor_position: Position { x: 0, y: 0 },
             cursor_offset: Position { x: 0, y: 0 },
-            opened_filename: "Empty".into(),
+            opened_filename: String::new(),
             window_size: Rect::new(0, 0, 0, 0),
             dirty: false,
             quit_times: QUIT_TIMES,

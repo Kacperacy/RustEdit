@@ -57,10 +57,14 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         })
         .collect();
 
-    let filename_content: String = if app.dirty {
-        format!("Filename: {} (modified)", app.opened_filename)
+    let filename_content: String = if !app.opened_filename.is_empty() {
+        if app.dirty {
+            format!("Filename: {} (modified)", app.opened_filename)
+        } else {
+            format!("Filename: {} ", app.opened_filename)
+        }
     } else {
-        format!("Filename: {} ", app.opened_filename)
+        "".into()
     };
 
     let filename_status = Line::from(filename_content)
