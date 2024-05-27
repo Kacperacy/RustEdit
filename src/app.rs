@@ -31,6 +31,7 @@ pub struct App {
     pub is_prompt: bool,
     pub prompt: String,
     prompt_cursor_position: Position,
+    status: String,
 }
 
 impl Default for App {
@@ -47,6 +48,7 @@ impl Default for App {
             is_prompt: false,
             prompt: String::new(),
             prompt_cursor_position: Position { x: 0, y: 0 },
+            status: String::new(),
         }
     }
 }
