@@ -78,7 +78,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let status_line: Line = if app.is_prompt {
         Line::from(format!("{:<}", app.prompt))
     } else {
-        Line::from("Press Ctrl + C to quit, Ctrl + S to save.").centered()
+        Line::from(format!("{}", app.status)).centered()
     };
 
     let layout = Layout::default()

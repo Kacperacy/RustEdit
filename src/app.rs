@@ -5,6 +5,7 @@ use ratatui::layout::Rect;
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 const QUIT_TIMES: i8 = 2;
+const DEFAULT_STATUS: &str = "Press Ctrl + C to quit, Ctrl + S to save.";
 
 #[derive(Debug)]
 pub struct Direction {
@@ -31,7 +32,7 @@ pub struct App {
     pub is_prompt: bool,
     pub prompt: String,
     prompt_cursor_position: Position,
-    status: String,
+    pub status: String,
 }
 
 impl Default for App {
@@ -48,7 +49,7 @@ impl Default for App {
             is_prompt: false,
             prompt: String::new(),
             prompt_cursor_position: Position { x: 0, y: 0 },
-            status: String::new(),
+            status: DEFAULT_STATUS.into(),
         }
     }
 }
@@ -123,6 +124,7 @@ impl App {
         }
 
         self.dirty = false;
+        self.status = format!("Saved to {}", self.opened_filename);
         let _ = fs::write(&self.opened_filename, self.content.join("\n"));
     }
 
@@ -220,6 +222,8 @@ impl App {
             }
             return;
         }
+
+        self.status = DEFAULT_STATUS.into();
 
         let pos = self.get_cursor_positon();
 
