@@ -5,7 +5,7 @@ use ratatui::layout::Rect;
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 const QUIT_TIMES: i8 = 2;
-const DEFAULT_STATUS: &str = "Press Ctrl + C to quit or Ctrl + S to save.";
+const DEFAULT_STATUS: &str = "Press Ctrl + C to quit, Ctrl + S to save.";
 
 #[derive(Debug)]
 pub struct Direction {
