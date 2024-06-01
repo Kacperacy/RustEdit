@@ -234,29 +234,31 @@ impl App {
         }
 
         if direction.y > 0 && pos.y > 0 {
-            self.move_cursor_up();
+            self.move_cursor_up(pos);
         } else if direction.y < 0 && pos.y < self.content.len().saturating_sub(1) {
-            self.move_cursor_down();
+            self.move_cursor_down(pos);
         }
     }
 
     fn move_cursor_left(&mut self, pos: Position) {
         if pos.x > 0 {
             if self.cursor_position.x == 0 {
-                self.cursor_offset.x -= 1;
+                if self.cursor_offset.x > 0 {
+                    self.cursor_offset.x -= 1;
+                }
             } else {
                 self.cursor_position.x -= 1;
             }
         } else if self.cursor_position.y > 0 {
             self.cursor_position.y -= 1;
-            let len = self.content[self.cursor_position.y].len();
+            let len = self.content[pos.y].len();
             self.cursor_position.x = min(len, self.window_size.width.into());
             self.cursor_offset.x = len - self.cursor_position.x;
         }
     }
 
     fn move_cursor_right(&mut self, pos: Position) {
-        if let Some(line) = self.content.get(self.cursor_position.y) {
+        if let Some(line) = self.content.get(pos.y) {
             if line.len() > pos.x {
                 if self.window_size.width.saturating_sub(1) > self.cursor_position.x as u16 {
                     self.cursor_position.x += 1;
@@ -275,28 +277,30 @@ impl App {
         }
     }
 
-    fn move_cursor_up(&mut self) {
+    fn move_cursor_up(&mut self, pos: Position) {
         if self.cursor_position.y == 0 {
-            self.cursor_offset.y -= 1;
+            if self.cursor_offset.y > 0 {
+                self.cursor_offset.y -= 1;
+            }
         } else {
             self.cursor_position.y -= 1;
         }
 
-        if self.cursor_position.x > self.content[self.cursor_position.y].len() {
-            self.cursor_position.x = self.content[self.cursor_position.y].len();
+        if self.cursor_position.x > self.content[pos.y - 1].len() {
+            self.cursor_position.x = self.content[pos.y - 1].len();
             self.cursor_offset.x = 0;
         }
     }
 
-    fn move_cursor_down(&mut self) {
+    fn move_cursor_down(&mut self, pos: Position) {
         if self.window_size.height.saturating_sub(4) > self.cursor_position.y as u16 {
             self.cursor_position.y += 1;
         } else {
             self.cursor_offset.y += 1;
         }
 
-        if self.cursor_position.x > self.content[self.cursor_position.y].len() {
-            self.cursor_position.x = self.content[self.cursor_position.y].len();
+        if self.cursor_position.x > self.content[pos.y + 1].len() {
+            self.cursor_position.x = self.content[pos.y + 1].len();
             self.cursor_offset.x = 0;
         }
     }
