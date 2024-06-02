@@ -251,7 +251,7 @@ impl App {
             }
         } else if self.cursor_position.y > 0 {
             self.cursor_position.y -= 1;
-            let len = self.content[pos.y].len();
+            let len = self.content[pos.y - 1].len();
             self.cursor_position.x = min(len, self.window_size.width.into());
             self.cursor_offset.x = len - self.cursor_position.x;
         }
