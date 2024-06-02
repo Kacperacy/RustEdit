@@ -11,10 +11,10 @@ const RELATIVE_LINES: bool = true;
 use crate::app::App;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
-    let content_width = (frame.size().width - 5) as usize;
-    let numbers_width = std::cmp::max((app.content.len() as f64).log10().ceil() as usize, 4);
+    let numbers_width = app.line_numbers_width;
+    let content_width = (frame.size().width - numbers_width as u16 - 1) as usize;
 
-    let pos = app.get_cursor_positon();
+    let pos = app.get_cursor_position();
 
     let content_lines: Vec<Line> = app
         .content

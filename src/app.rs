@@ -33,6 +33,7 @@ pub struct App {
     pub prompt: String,
     prompt_cursor_position: Position,
     pub status: String,
+    pub line_numbers_width: usize,
 }
 
 impl Default for App {
@@ -50,6 +51,7 @@ impl Default for App {
             prompt: String::new(),
             prompt_cursor_position: Position { x: 0, y: 0 },
             status: DEFAULT_STATUS.into(),
+            line_numbers_width: 4,
         }
     }
 }
@@ -82,23 +84,37 @@ impl App {
         self.quit_times = QUIT_TIMES;
     }
 
-    pub fn get_cursor_positon(&self) -> Position {
-        let x = if self.is_prompt {
-            self.prompt_cursor_position.x
+    pub fn get_cursor_position(&self) -> Position {
+        if self.is_prompt {
+            Position {
+                x: self.prompt_cursor_position.x + self.cursor_offset.x,
+                y: self.prompt_cursor_position.y + self.cursor_offset.y,
+            }
         } else {
-            self.cursor_position.x
-        };
-
-        let y = if self.is_prompt {
-            self.prompt_cursor_position.y
-        } else {
-            self.cursor_position.y
-        };
-
-        Position {
-            x: x + self.cursor_offset.x,
-            y: y + self.cursor_offset.y,
+            Position {
+                x: self.cursor_position.x + self.cursor_offset.x,
+                y: self.cursor_position.y + self.cursor_offset.y,
+            }
         }
+    }
+
+    fn push_to_content(&mut self, s: String) {
+        self.content.push(s);
+        self.line_numbers_width =
+            std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
+    }
+
+    fn insert_to_content(&mut self, index: usize, s: String) {
+        self.content.insert(index, s);
+        self.line_numbers_width =
+            std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
+    }
+
+    fn remove_from_content(&mut self, index: usize) -> String {
+        let s = self.content.remove(index);
+        self.line_numbers_width =
+            std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
+        s
     }
 
     pub fn enter_prompt(&mut self) {
@@ -136,7 +152,7 @@ impl App {
         }
 
         while self.cursor_position.y >= self.content.len() {
-            self.content.push(String::new());
+            self.push_to_content(String::new());
         }
 
         self.content[self.cursor_position.y + self.cursor_offset.y]
@@ -153,7 +169,7 @@ impl App {
         }
 
         while self.cursor_position.y >= self.content.len() {
-            self.content.push(String::new());
+            self.push_to_content(String::new());
         }
 
         let current_line = &self.content[self.cursor_position.y];
@@ -161,12 +177,12 @@ impl App {
         if current_line.len() > 0 {
             let new_line = self.content[self.cursor_position.y].split_off(self.cursor_position.x);
 
-            self.content.insert(
+            self.insert_to_content(
                 self.cursor_position.y + self.cursor_offset.y + 1,
                 String::from(new_line),
             );
         } else {
-            self.content.insert(
+            self.insert_to_content(
                 self.cursor_position.y + self.cursor_offset.y + 1,
                 String::new(),
             );
@@ -190,14 +206,14 @@ impl App {
             return;
         }
 
-        let pos = self.get_cursor_positon();
+        let pos = self.get_cursor_position();
 
         if self.content[pos.y].len() == 0 {
-            self.content.remove(pos.y);
+            self.remove_from_content(pos.y);
 
             self.move_cursor(Direction { x: 0, y: 1 });
         } else if self.cursor_position.x == 0 && self.cursor_position.y > 0 {
-            let lower_line = self.content.remove(pos.y);
+            let lower_line = self.remove_from_content(pos.y);
 
             self.cursor_position.x = self.content[pos.y - 1].len();
 
@@ -225,7 +241,7 @@ impl App {
 
         self.status = DEFAULT_STATUS.into();
 
-        let pos = self.get_cursor_positon();
+        let pos = self.get_cursor_position();
 
         if direction.x < 0 {
             self.move_cursor_left(pos);
@@ -260,7 +276,7 @@ impl App {
     fn move_cursor_right(&mut self, pos: Position) {
         if let Some(line) = self.content.get(pos.y) {
             if line.len() > pos.x {
-                if self.window_size.width.saturating_sub(1) > self.cursor_position.x as u16 {
+                if self.window_size.width > (self.cursor_position.x + 1) as u16 {
                     self.cursor_position.x += 1;
                 } else {
                     self.cursor_offset.x += 1;
