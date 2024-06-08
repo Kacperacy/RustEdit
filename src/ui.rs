@@ -63,8 +63,10 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         } else {
             format!("Filename: {} ", app.opened_filename)
         }
-    } else {
+    } else if app.dirty {
         "Not saved!".into()
+    } else {
+        "".into()
     };
 
     let filename_status = Line::from(filename_content)
