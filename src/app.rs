@@ -98,16 +98,19 @@ impl App {
         }
     }
 
-    fn push_to_content(&mut self, s: String) {
-        self.content.push(s);
+    fn update_line_numbers_width(&mut self) {
         self.line_numbers_width =
             std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
     }
 
+    fn push_to_content(&mut self, s: String) {
+        self.content.push(s);
+        self.update_line_numbers_width();
+    }
+
     fn insert_to_content(&mut self, index: usize, s: String) {
         self.content.insert(index, s);
-        self.line_numbers_width =
-            std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
+        self.update_line_numbers_width();
     }
 
     fn remove_from_content(&mut self, index: usize) -> String {
