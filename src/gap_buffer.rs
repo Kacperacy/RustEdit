@@ -40,6 +40,23 @@ impl GapBuffer {
     }
 
     fn move_cursor(&mut self, index: usize) {
-        if index < self.gap_start {}
+        if index < self.gap_start {
+            let move_size = self.gap_start - index;
+            self.buffer
+                .copy_within(index..self.gap_start, self.gap_end - move_size);
+            self.gap_start = index;
+            self.gap_end -= move_size;
+        } else if index > self.gap_start {
+            let move_size = index - self.gap_start;
+            self.buffer
+                .copy_within(self.gap_end..self.gap_end + move_size, self.gap_start);
+            self.gap_start += move_size;
+            self.gap_end += move_size;
+        }
+    }
+
+    fn to_string(&self) -> String {
+        let mut result: Vec<char> =
+            Vec::with_capacity(self.buffer.len() - (self.gap_end - self.gap_start));
     }
 }
