@@ -54,9 +54,4 @@ impl GapBuffer {
             self.gap_end += move_size;
         }
     }
-
-    fn to_string(&self) -> String {
-        let mut result: Vec<char> =
-            Vec::with_capacity(self.buffer.len() - (self.gap_end - self.gap_start));
-    }
 }
