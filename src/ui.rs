@@ -22,10 +22,10 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         .enumerate()
         .map(|(i, s)| {
             if i == pos.y {
-                Line::from(format!("{:<content_width$}", s))
+                Line::from(format!("{:<content_width$}", s.to_string()))
                     .style(Style::default().bg(Color::Rgb(64, 64, 96)))
             } else {
-                Line::from(format!("{}", s))
+                Line::from(format!("{}", s.to_string()))
             }
         })
         .collect();

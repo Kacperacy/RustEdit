@@ -2,8 +2,11 @@ use std::{cmp::min, error, fs};
 
 use ratatui::layout::Rect;
 
+use crate::gap_buffer::GapBuffer;
+
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+const GAP_BUFFER_DEFAULT_SIZE: usize = 80;
 const QUIT_TIMES: i8 = 2;
 const DEFAULT_STATUS: &str = "Press Ctrl + C to quit, Ctrl + S to save.";
 
@@ -22,7 +25,7 @@ pub struct Position {
 #[derive(Debug)]
 pub struct App {
     pub running: bool,
-    pub content: Vec<String>,
+    pub content: Vec<GapBuffer>,
     pub cursor_position: Position,
     pub cursor_offset: Position,
     pub opened_filename: String,
@@ -40,7 +43,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            content: vec![String::new()],
+            content: vec![],
             cursor_position: Position { x: 0, y: 0 },
             cursor_offset: Position { x: 0, y: 0 },
             opened_filename: String::new(),
@@ -103,12 +106,12 @@ impl App {
             std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
     }
 
-    fn push_to_content(&mut self, s: String) {
+    fn push_to_content(&mut self, s: GapBuffer) {
         self.content.push(s);
         self.update_line_numbers_width();
     }
 
-    fn insert_to_content(&mut self, index: usize, s: String) {
+    fn insert_to_content(&mut self, index: usize, s: GapBuffer) {
         self.content.insert(index, s);
         self.update_line_numbers_width();
     }
@@ -117,7 +120,7 @@ impl App {
         let s = self.content.remove(index);
         self.line_numbers_width =
             std::cmp::max((self.content.len() as f64).log10().ceil() as usize, 4);
-        s
+        s.to_string()
     }
 
     pub fn enter_prompt(&mut self) {
@@ -144,7 +147,14 @@ impl App {
 
         self.dirty = false;
         self.status = format!("Saved to {}", self.opened_filename);
-        let _ = fs::write(&self.opened_filename, self.content.join("\n"));
+        let _ = fs::write(
+            &self.opened_filename,
+            self.content
+                .iter()
+                .map(|b| b.to_string())
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
     }
 
     pub fn insert_char(&mut self, c: char) {
@@ -155,11 +165,11 @@ impl App {
         }
 
         while self.cursor_position.y >= self.content.len() {
-            self.push_to_content(String::new());
+            self.push_to_content(GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE));
         }
 
         self.content[self.cursor_position.y + self.cursor_offset.y]
-            .insert(self.cursor_position.x + self.cursor_offset.x, c);
+            .insert_at(self.cursor_position.x + self.cursor_offset.x, c);
         self.move_cursor(Direction { x: 1, y: 0 });
     }
 
@@ -172,22 +182,20 @@ impl App {
         }
 
         while self.cursor_position.y >= self.content.len() {
-            self.push_to_content(String::new());
+            self.push_to_content(GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE));
         }
 
-        let current_line = &self.content[self.cursor_position.y];
+        let current_line = &mut self.content[self.cursor_position.y];
 
         if current_line.len() > 0 {
-            let new_line = self.content[self.cursor_position.y].split_off(self.cursor_position.x);
+            let new_line = current_line.split_off(self.cursor_position.x);
+            let index = self.cursor_position.y + self.cursor_offset.y + 1;
 
-            self.insert_to_content(
-                self.cursor_position.y + self.cursor_offset.y + 1,
-                String::from(new_line),
-            );
+            self.insert_to_content(index, new_line);
         } else {
             self.insert_to_content(
                 self.cursor_position.y + self.cursor_offset.y + 1,
-                String::new(),
+                GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE),
             );
         }
 
@@ -224,7 +232,7 @@ impl App {
 
             self.move_cursor(Direction { x: 0, y: 1 });
         } else if !(self.cursor_position.x == 0 && self.cursor_position.y == 0) {
-            self.content[pos.y].remove(pos.x - 1);
+            self.content[pos.y].remove_at(pos.x - 1);
 
             self.move_cursor(Direction { x: -1, y: 0 });
         }
