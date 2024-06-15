@@ -107,6 +107,7 @@ impl GapBuffer {
             gap_end: new_capacity,
         };
 
+        self.buffer.truncate(self.gap_start);
         self.gap_end = self.buffer.len();
 
         split_buffer

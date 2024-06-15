@@ -185,13 +185,13 @@ impl App {
             self.push_to_content(GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE));
         }
 
+        let pos = self.get_cursor_position();
         let current_line = &mut self.content[self.cursor_position.y];
 
-        if current_line.len() > 0 {
-            let new_line = current_line.split_off(self.cursor_position.x);
-            let index = self.cursor_position.y + self.cursor_offset.y + 1;
+        if current_line.len() > pos.x {
+            let new_line = current_line.split_off(pos.x);
 
-            self.insert_to_content(index, new_line);
+            self.insert_to_content(pos.y + 1, new_line);
         } else {
             self.insert_to_content(
                 self.cursor_position.y + self.cursor_offset.y + 1,
