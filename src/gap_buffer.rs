@@ -101,14 +101,12 @@ impl GapBuffer {
 
         new_buffer[..new_capacity].copy_from_slice(&self.buffer[self.gap_end..]);
 
-        let split_buffer = GapBuffer {
+        self.gap_end = self.buffer.len();
+
+        GapBuffer {
             buffer: new_buffer,
             gap_start: 0,
             gap_end: new_capacity,
-        };
-
-        self.gap_end = self.buffer.len();
-
-        split_buffer
+        }
     }
 }

@@ -189,7 +189,6 @@ impl App {
         let current_line = &mut self.content[self.cursor_position.y];
 
         if current_line.len() > pos.x {
-            // TODO: fix
             let new_line = current_line.split_off(pos.x);
 
             self.insert_to_content(pos.y + 1, new_line);
