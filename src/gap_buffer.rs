@@ -1,8 +1,12 @@
+use std::cmp;
+
+const GAP_BUFFER_DEFAULT_SIZE: usize = 80;
+
 #[derive(Debug, Clone)]
 pub struct GapBuffer {
-    buffer: Vec<char>,
-    gap_start: usize,
-    gap_end: usize,
+    pub buffer: Vec<char>,
+    pub gap_start: usize,
+    pub gap_end: usize,
 }
 
 impl GapBuffer {
@@ -27,8 +31,13 @@ impl GapBuffer {
         let mut new_buffer = vec![' '; new_capacity];
         let gap_size = self.gap_end - self.gap_start;
 
-        new_buffer[..self.gap_start].copy_from_slice(&self.buffer[..self.gap_start]);
-        new_buffer[new_capacity - gap_size..].copy_from_slice(&self.buffer[self.gap_end..]);
+        if self.gap_start > 0 {
+            new_buffer[..self.gap_start].copy_from_slice(&self.buffer[..self.gap_start]);
+        }
+
+        if self.gap_end < self.buffer.len() {
+            new_buffer[new_capacity - gap_size..].copy_from_slice(&self.buffer[self.gap_end..]);
+        }
 
         self.gap_end = new_capacity - gap_size;
         self.buffer = new_buffer;
@@ -96,17 +105,18 @@ impl GapBuffer {
         }
         self.move_gap(at);
 
-        let new_capacity = self.buffer.len() - self.gap_end;
-        let mut new_buffer = vec![' '; new_capacity];
+        let content_len = self.buffer.len() - self.gap_end;
+        let buffer_len = cmp::max(GAP_BUFFER_DEFAULT_SIZE, content_len);
+        let mut new_buffer = vec![' '; buffer_len];
 
-        new_buffer[..new_capacity].copy_from_slice(&self.buffer[self.gap_end..]);
+        new_buffer[..content_len].copy_from_slice(&self.buffer[self.gap_end..]);
 
         self.gap_end = self.buffer.len();
 
         GapBuffer {
             buffer: new_buffer,
-            gap_start: 0,
-            gap_end: new_capacity,
+            gap_start: content_len,
+            gap_end: buffer_len,
         }
     }
 }
