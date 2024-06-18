@@ -181,11 +181,12 @@ impl App {
             return;
         }
 
-        while self.cursor_position.y >= self.content.len() {
+        let pos = self.get_cursor_position();
+
+        while pos.y >= self.content.len() {
             self.push_to_content(GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE));
         }
 
-        let pos = self.get_cursor_position();
         let current_line = &mut self.content[self.cursor_position.y];
 
         if current_line.len() > pos.x {
