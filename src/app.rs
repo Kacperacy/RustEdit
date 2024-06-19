@@ -43,7 +43,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            content: vec![],
+            content: vec![GapBuffer::new(80)],
             cursor_position: Position { x: 0, y: 0 },
             cursor_offset: Position { x: 0, y: 0 },
             opened_filename: String::new(),
@@ -187,17 +187,14 @@ impl App {
             self.push_to_content(GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE));
         }
 
-        let current_line = &mut self.content[self.cursor_position.y];
+        let current_line = &mut self.content[pos.y];
 
         if current_line.len() > pos.x {
             let new_line = current_line.split_off(pos.x);
 
             self.insert_to_content(pos.y + 1, new_line);
         } else {
-            self.insert_to_content(
-                self.cursor_position.y + self.cursor_offset.y + 1,
-                GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE),
-            );
+            self.insert_to_content(pos.y + 1, GapBuffer::new(GAP_BUFFER_DEFAULT_SIZE));
         }
 
         self.cursor_position.x = 0;

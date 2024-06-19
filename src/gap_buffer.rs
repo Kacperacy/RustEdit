@@ -29,17 +29,13 @@ impl GapBuffer {
     fn resize(&mut self) {
         let new_capacity = self.buffer.len() * 2;
         let mut new_buffer = vec![' '; new_capacity];
-        let gap_size = self.gap_end - self.gap_start;
 
-        if self.gap_start > 0 {
-            new_buffer[..self.gap_start].copy_from_slice(&self.buffer[..self.gap_start]);
-        }
+        new_buffer[..self.gap_start].copy_from_slice(&self.buffer[..self.gap_start]);
 
-        if self.gap_end < self.buffer.len() {
-            new_buffer[new_capacity - gap_size..].copy_from_slice(&self.buffer[self.gap_end..]);
-        }
+        let new_gap_end = new_capacity - (self.buffer.len() - self.gap_end);
+        new_buffer[new_gap_end..].copy_from_slice(&self.buffer[self.gap_end..]);
 
-        self.gap_end = new_capacity - gap_size;
+        self.gap_end = new_gap_end;
         self.buffer = new_buffer;
     }
 

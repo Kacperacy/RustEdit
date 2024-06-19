@@ -36,7 +36,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         } else {
             (1..=pos.y)
                 .rev()
-                .chain(std::iter::once(pos.y))
+                .chain(std::iter::once(pos.y + 1))
                 .chain(1..=app.content.len().saturating_sub(pos.y + 1))
                 .collect::<Vec<_>>()
         }
