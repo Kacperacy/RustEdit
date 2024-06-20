@@ -10,6 +10,12 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
             if key_event.code == KeyCode::Char('s') || key_event.code == KeyCode::Char('S') {
                 app.save_to_file();
             }
+            if key_event.code == KeyCode::Left {
+                // TODO: handling
+            }
+            if key_event.code == KeyCode::Right {
+                // TODO: handling
+            }
         }
         _ => match key_event.code {
             KeyCode::Esc => {
