@@ -3,7 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
     match key_event.modifiers {
-        KeyModifiers::CONTROL => {
+        KeyModifiers::CONTROL || KeyModifiers::ALT => {
             if key_event.code == KeyCode::Char('c') || key_event.code == KeyCode::Char('C') {
                 app.quit();
             }
@@ -11,10 +11,10 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 app.save_to_file();
             }
             if key_event.code == KeyCode::Left {
-                // TODO: handling
+                app.jump_at_start_line();
             }
             if key_event.code == KeyCode::Right {
-                // TODO: handling
+                app.jump_at_end_line();
             }
         }
         _ => match key_event.code {

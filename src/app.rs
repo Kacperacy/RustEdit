@@ -331,4 +331,22 @@ impl App {
             self.cursor_offset.x = 0;
         }
     }
+
+    pub fn jump_at_end_line(&mut self) {
+        let pos = self.get_cursor_position();
+        let len = self.content[pos.y].len();
+        let width = self.window_size.width.into();
+
+        if len > width {
+            self.cursor_position.x = width;
+            self.cursor_offset.x = len - width;
+        } else {
+            self.cursor_position.x = len - self.cursor_offset.x;
+        }
+    }
+
+    pub fn jump_at_start_line(&mut self) {
+        self.cursor_position.x = 0;
+        self.cursor_offset.x = 0;
+    }
 }
