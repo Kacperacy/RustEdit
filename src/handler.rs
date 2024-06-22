@@ -17,6 +17,9 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 app.jump_at_end_line();
             }
         }
+        KeyModifiers::SHIFT => {
+            // TODO: implement text selection
+        }
         _ => match key_event.code {
             KeyCode::Esc => {
                 app.exit_prompt();
