@@ -33,16 +33,16 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 app.pop_char();
             }
             KeyCode::Left => {
-                app.move_cursor(Direction { x: -1, y: 0 });
+                app.move_cursor(Direction { x: -1, y: 0 }, false);
             }
             KeyCode::Right => {
-                app.move_cursor(Direction { x: 1, y: 0 });
+                app.move_cursor(Direction { x: 1, y: 0 }, false);
             }
             KeyCode::Up => {
-                app.move_cursor(Direction { x: 0, y: 1 });
+                app.move_cursor(Direction { x: 0, y: 1 }, false);
             }
             KeyCode::Down => {
-                app.move_cursor(Direction { x: 0, y: -1 });
+                app.move_cursor(Direction { x: 0, y: -1 }, false);
             }
             _ => {
                 if let KeyCode::Char(c) = key_event.code {

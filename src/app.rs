@@ -37,6 +37,8 @@ pub struct App {
     prompt_cursor_position: Position,
     pub status: String,
     pub line_numbers_width: usize,
+    pub is_selecting: bool,
+    pub selecting_position: Position,
 }
 
 impl Default for App {
@@ -55,6 +57,8 @@ impl Default for App {
             prompt_cursor_position: Position { x: 0, y: 0 },
             status: DEFAULT_STATUS.into(),
             line_numbers_width: 4,
+            is_selecting: false,
+            selecting_position: Position { x: 0, y: 0 },
         }
     }
 }
@@ -160,7 +164,7 @@ impl App {
     pub fn insert_char(&mut self, c: char) {
         if self.is_prompt {
             self.prompt.insert(self.cursor_position.x, c);
-            self.move_cursor(Direction { x: 1, y: 0 });
+            self.move_cursor(Direction { x: 1, y: 0 }, false);
             return;
         }
 
@@ -170,7 +174,7 @@ impl App {
 
         self.content[self.cursor_position.y + self.cursor_offset.y]
             .insert_at(self.cursor_position.x + self.cursor_offset.x, c);
-        self.move_cursor(Direction { x: 1, y: 0 });
+        self.move_cursor(Direction { x: 1, y: 0 }, false);
     }
 
     pub fn add_new_line(&mut self) {
@@ -198,7 +202,7 @@ impl App {
         }
 
         self.cursor_position.x = 0;
-        self.move_cursor(Direction { x: 0, y: -1 });
+        self.move_cursor(Direction { x: 0, y: -1 }, false);
     }
 
     pub fn pop_char(&mut self) {
@@ -207,7 +211,7 @@ impl App {
                 return;
             }
             self.prompt.pop();
-            self.move_cursor(Direction { x: -1, y: 0 });
+            self.move_cursor(Direction { x: -1, y: 0 }, false);
             return;
         }
 
@@ -220,7 +224,7 @@ impl App {
         if self.content[pos.y].len() == 0 {
             self.remove_from_content(pos.y);
 
-            self.move_cursor(Direction { x: 0, y: 1 });
+            self.move_cursor(Direction { x: 0, y: 1 }, false);
         } else if self.cursor_position.x == 0 && self.cursor_position.y > 0 {
             let lower_line = self.remove_from_content(pos.y);
 
@@ -228,15 +232,15 @@ impl App {
 
             self.content[pos.y - 1].push_str(&lower_line);
 
-            self.move_cursor(Direction { x: 0, y: 1 });
+            self.move_cursor(Direction { x: 0, y: 1 }, false);
         } else if !(self.cursor_position.x == 0 && self.cursor_position.y == 0) {
             self.content[pos.y].remove_at(pos.x - 1);
 
-            self.move_cursor(Direction { x: -1, y: 0 });
+            self.move_cursor(Direction { x: -1, y: 0 }, false);
         }
     }
 
-    pub fn move_cursor(&mut self, direction: Direction) {
+    pub fn move_cursor(&mut self, direction: Direction, is_selection: bool) {
         self.reset_quit();
 
         if self.is_prompt {
