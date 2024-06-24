@@ -252,6 +252,11 @@ impl App {
             return;
         }
 
+        if is_selection && !self.is_selecting {
+            self.is_selecting = true;
+            self.selecting_position = self.get_cursor_position();
+        }
+
         if self.status != DEFAULT_STATUS {
             self.status = DEFAULT_STATUS.into();
         }
