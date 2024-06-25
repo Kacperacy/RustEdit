@@ -16,6 +16,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     let pos = app.get_cursor_position();
 
+    // TODO: remove highlight if select
     let content_lines: Vec<Line> = app
         .content
         .iter()
@@ -30,6 +31,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         })
         .collect();
 
+    // TODO: remove highlight if select
     let numbers = if RELATIVE_LINES {
         if app.content.len() == 1 {
             vec![1]
@@ -44,6 +46,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         (1..=app.content.len()).collect::<Vec<_>>()
     };
 
+    // TODO: remove highlight if select
     let line_numbers: Vec<Line> = numbers
         .iter()
         .enumerate()
@@ -57,6 +60,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         })
         .collect();
 
+    // TODO: remove highlight if select
     let filename_content: String = if !app.opened_filename.is_empty() {
         if app.dirty {
             format!("Filename: {} (modified)", app.opened_filename)
