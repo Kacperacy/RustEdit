@@ -24,6 +24,8 @@ pub struct Position {
 
 #[derive(Debug)]
 pub struct App {
+    prompt_cursor_position: Position,
+    quit_times: i8,
     pub running: bool,
     pub content: Vec<GapBuffer>,
     pub cursor_position: Position,
@@ -31,10 +33,8 @@ pub struct App {
     pub opened_filename: String,
     pub window_size: Rect,
     pub dirty: bool,
-    quit_times: i8,
     pub is_prompt: bool,
     pub prompt: String,
-    prompt_cursor_position: Position,
     pub status: String,
     pub line_numbers_width: usize,
     pub is_selecting: bool,
