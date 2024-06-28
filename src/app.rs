@@ -252,6 +252,7 @@ impl App {
             return;
         }
 
+        // TODO: move if selection
         if is_selection && !self.is_selecting {
             self.is_selecting = true;
             self.selecting_position = self.get_cursor_position();
