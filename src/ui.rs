@@ -17,7 +17,6 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     let pos = app.get_cursor_position();
 
     // TODO: remove highlight if select
-    // TODO: remove highlight if select
     let content_lines: Vec<Line> = app
         .content
         .iter()
